@@ -198,6 +198,8 @@ function App() {
     { id: 'cena', name: 'Cena', color: 'bg-indigo-500', emoji: '🌙' },
     { id: 'colazione', name: 'Colazione', color: 'bg-amber-500', emoji: '☀️' },
     { id: 'spuntino', name: 'Spuntino', color: 'bg-purple-500', emoji: '🍪' },
+    { id: 'pre_workout', name: 'Pre-Workout', color: 'bg-green-500', emoji: '💪' },
+    { id: 'post_workout', name: 'Post-Workout', color: 'bg-cyan-500', emoji: '🔄' },
   ];
 
   // State for composing dishes
@@ -217,6 +219,15 @@ function App() {
     { id: 'ing_polpette_veg', name: 'Polpette vegetali', category: 'proteine', isIngredient: true },
     { id: 'ing_lenticchie', name: 'Lenticchie', category: 'proteine', isIngredient: true },
     { id: 'ing_feta', name: 'Feta', category: 'proteine', isIngredient: true },
+    // Sport-focused proteins
+    { id: 'ing_tacchino', name: 'Tacchino', category: 'proteine', isIngredient: true, tags: ['high-protein', 'lean'] },
+    { id: 'ing_gamberi', name: 'Gamberi', category: 'proteine', isIngredient: true, tags: ['high-protein', 'lean'] },
+    { id: 'ing_ceci', name: 'Ceci', category: 'proteine', isIngredient: true, tags: ['plant-protein', 'fiber'] },
+    { id: 'ing_tofu', name: 'Tofu', category: 'proteine', isIngredient: true, tags: ['plant-protein', 'versatile'] },
+    { id: 'ing_edamame', name: 'Edamame', category: 'proteine', isIngredient: true, tags: ['plant-protein', 'snack'] },
+    { id: 'ing_bresaola', name: 'Bresaola', category: 'proteine', isIngredient: true, tags: ['high-protein', 'lean'] },
+    { id: 'ing_fiocchi_latte', name: 'Fiocchi di latte', category: 'proteine', isIngredient: true, tags: ['casein', 'recovery'] },
+    { id: 'ing_skyr', name: 'Skyr', category: 'proteine', isIngredient: true, tags: ['high-protein', 'recovery'] },
     // Carboidrati
     { id: 'ing_quinoa', name: 'Quinoa', category: 'carboidrati', isIngredient: true },
     { id: 'ing_riso_int', name: 'Riso integrale', category: 'carboidrati', isIngredient: true },
@@ -225,6 +236,12 @@ function App() {
     { id: 'ing_pizza_int', name: 'Pizza base integrale', category: 'carboidrati', isIngredient: true },
     { id: 'ing_muesli', name: 'Muesli', category: 'carboidrati', isIngredient: true },
     { id: 'ing_cracker', name: 'Cracker', category: 'carboidrati', isIngredient: true },
+    // Sport-focused carbs
+    { id: 'ing_avena', name: 'Avena/Porridge', category: 'carboidrati', isIngredient: true, tags: ['pre-workout', 'slow-carbs'] },
+    { id: 'ing_patate_dolci', name: 'Patate dolci', category: 'carboidrati', isIngredient: true, tags: ['complex-carbs', 'recovery'] },
+    { id: 'ing_riso_basmati', name: 'Riso basmati', category: 'carboidrati', isIngredient: true, tags: ['post-workout', 'fast-carbs'] },
+    { id: 'ing_pasta_int', name: 'Pasta integrale', category: 'carboidrati', isIngredient: true, tags: ['pre-workout', 'energy'] },
+    { id: 'ing_cous_cous', name: 'Cous cous', category: 'carboidrati', isIngredient: true, tags: ['quick-prep', 'versatile'] },
     // Verdure
     { id: 'ing_verdure_grig', name: 'Verdure grigliate', category: 'verdure', isIngredient: true },
     { id: 'ing_verdure_forno', name: 'Verdure al forno', category: 'verdure', isIngredient: true },
@@ -234,16 +251,34 @@ function App() {
     { id: 'ing_lattuga', name: 'Lattuga', category: 'verdure', isIngredient: true },
     { id: 'ing_cetrioli', name: 'Cetrioli', category: 'verdure', isIngredient: true },
     { id: 'ing_pomodorini', name: 'Pomodorini', category: 'verdure', isIngredient: true },
+    // Sport-focused veggies
+    { id: 'ing_spinaci', name: 'Spinaci', category: 'verdure', isIngredient: true, tags: ['iron', 'recovery'] },
+    { id: 'ing_broccoli', name: 'Broccoli', category: 'verdure', isIngredient: true, tags: ['vitamins', 'fiber'] },
+    { id: 'ing_zucchine', name: 'Zucchine', category: 'verdure', isIngredient: true, tags: ['low-cal', 'versatile'] },
+    { id: 'ing_peperoni', name: 'Peperoni', category: 'verdure', isIngredient: true, tags: ['vitamin-c', 'antioxidants'] },
+    { id: 'ing_avocado', name: 'Avocado', category: 'verdure', isIngredient: true, tags: ['healthy-fats', 'recovery'] },
     // Latticini
     { id: 'ing_yogurt_greco', name: 'Yogurt greco', category: 'latticini', isIngredient: true },
     { id: 'ing_ricotta', name: 'Ricotta', category: 'latticini', isIngredient: true },
     { id: 'ing_latte_sl', name: 'Latte s.l.', category: 'latticini', isIngredient: true },
     // Frutta
-    { id: 'ing_banana', name: 'Banana', category: 'frutta', isIngredient: true },
+    { id: 'ing_banana', name: 'Banana', category: 'frutta', isIngredient: true, tags: ['pre-workout', 'potassium'] },
     { id: 'ing_frutta', name: 'Frutta mista', category: 'frutta', isIngredient: true },
+    // Sport-focused fruits
+    { id: 'ing_frutti_bosco', name: 'Frutti di bosco', category: 'frutta', isIngredient: true, tags: ['antioxidants', 'recovery'] },
+    { id: 'ing_mela', name: 'Mela', category: 'frutta', isIngredient: true, tags: ['fiber', 'snack'] },
+    { id: 'ing_arancia', name: 'Arancia', category: 'frutta', isIngredient: true, tags: ['vitamin-c', 'hydration'] },
+    { id: 'ing_kiwi', name: 'Kiwi', category: 'frutta', isIngredient: true, tags: ['vitamin-c', 'digestion'] },
     // Altro
     { id: 'ing_marmellata', name: 'Marmellata', category: 'altro_ing', isIngredient: true },
-    { id: 'ing_burro_arachidi', name: 'Burro d\'arachidi', category: 'altro_ing', isIngredient: true },
+    { id: 'ing_burro_arachidi', name: 'Burro d\'arachidi', category: 'altro_ing', isIngredient: true, tags: ['healthy-fats', 'protein'] },
+    // Sport-focused extras
+    { id: 'ing_semi_chia', name: 'Semi di chia', category: 'altro_ing', isIngredient: true, tags: ['omega-3', 'fiber'] },
+    { id: 'ing_mandorle', name: 'Mandorle', category: 'altro_ing', isIngredient: true, tags: ['healthy-fats', 'snack'] },
+    { id: 'ing_noci', name: 'Noci', category: 'altro_ing', isIngredient: true, tags: ['omega-3', 'brain'] },
+    { id: 'ing_hummus', name: 'Hummus', category: 'altro_ing', isIngredient: true, tags: ['protein', 'snack'] },
+    { id: 'ing_miele', name: 'Miele', category: 'altro_ing', isIngredient: true, tags: ['natural-sugar', 'energy'] },
+    { id: 'ing_cioccolato_fond', name: 'Cioccolato fondente', category: 'altro_ing', isIngredient: true, tags: ['antioxidants', 'reward'] },
   ];
 
   // Default composed dishes
@@ -256,19 +291,48 @@ function App() {
     { id: 'dish_5', name: 'Lenticchie + Verdure al forno', category: 'pranzo', isComposite: true, ingredientIds: ['ing_lenticchie', 'ing_verdure_forno'] },
     { id: 'dish_6', name: 'Insalata greca (lattuga, cetrioli, pomodorini, feta, tonno)', category: 'pranzo', isComposite: true, ingredientIds: ['ing_lattuga', 'ing_cetrioli', 'ing_pomodorini', 'ing_feta', 'ing_tonno'] },
     { id: 'dish_7', name: 'Lenticchie + Verdure fresche', category: 'pranzo', isComposite: true, ingredientIds: ['ing_lenticchie', 'ing_verdure_fresche'] },
+    // Sport-focused lunches
+    { id: 'dish_18', name: 'Tacchino + Patate dolci + Broccoli', category: 'pranzo', isComposite: true, ingredientIds: ['ing_tacchino', 'ing_patate_dolci', 'ing_broccoli'], tags: ['high-protein'] },
+    { id: 'dish_19', name: 'Gamberi + Cous cous + Zucchine', category: 'pranzo', isComposite: true, ingredientIds: ['ing_gamberi', 'ing_cous_cous', 'ing_zucchine'], tags: ['lean'] },
+    { id: 'dish_20', name: 'Tofu + Riso basmati + Spinaci', category: 'pranzo', isComposite: true, ingredientIds: ['ing_tofu', 'ing_riso_basmati', 'ing_spinaci'], tags: ['plant-based'] },
+    { id: 'dish_21', name: 'Ceci + Quinoa + Avocado', category: 'pranzo', isComposite: true, ingredientIds: ['ing_ceci', 'ing_quinoa', 'ing_avocado'], tags: ['plant-based', 'fiber'] },
     // Cene
     { id: 'dish_8', name: 'Merluzzo al forno + Insalata', category: 'cena', isComposite: true, ingredientIds: ['ing_merluzzo', 'ing_insalata'] },
     { id: 'dish_9', name: 'Polpette vegetali + Verdure miste', category: 'cena', isComposite: true, ingredientIds: ['ing_polpette_veg', 'ing_verdure_miste'] },
     { id: 'dish_10', name: 'Pollo + Verdure grigliate', category: 'cena', isComposite: true, ingredientIds: ['ing_pollo', 'ing_verdure_grig'] },
     { id: 'dish_11', name: 'Uova strapazzate/frittata + Insalata', category: 'cena', isComposite: true, ingredientIds: ['ing_uova', 'ing_insalata'] },
     { id: 'dish_12', name: 'Pizza integrale + Insalata', category: 'cena', isComposite: true, ingredientIds: ['ing_pizza_int', 'ing_insalata'] },
+    // Sport-focused dinners (recovery meals)
+    { id: 'dish_22', name: 'Salmone + Patate dolci + Spinaci (Recovery)', category: 'cena', isComposite: true, ingredientIds: ['ing_salmone', 'ing_patate_dolci', 'ing_spinaci'], tags: ['recovery', 'omega-3'] },
+    { id: 'dish_23', name: 'Tacchino + Farro + Peperoni', category: 'cena', isComposite: true, ingredientIds: ['ing_tacchino', 'ing_farro', 'ing_peperoni'], tags: ['high-protein'] },
+    { id: 'dish_24', name: 'Bresaola + Avocado + Insalata', category: 'cena', isComposite: true, ingredientIds: ['ing_bresaola', 'ing_avocado', 'ing_insalata'], tags: ['keto-friendly', 'lean'] },
     // Colazioni
     { id: 'dish_13', name: 'Yogurt greco + Muesli + Banana (Andrea)', category: 'colazione', isComposite: true, ingredientIds: ['ing_yogurt_greco', 'ing_muesli', 'ing_banana'], person: 'andrea' },
     { id: 'dish_14', name: 'Pane integrale + Ricotta + Marmellata (Gaia)', category: 'colazione', isComposite: true, ingredientIds: ['ing_pane_int', 'ing_ricotta', 'ing_marmellata'], person: 'gaia' },
     { id: 'dish_15', name: 'Latte s.l. + Muesli + Banana (Gaia weekend)', category: 'colazione', isComposite: true, ingredientIds: ['ing_latte_sl', 'ing_muesli', 'ing_banana'], person: 'gaia' },
+    // Sport-focused breakfasts
+    { id: 'dish_25', name: 'Porridge + Frutti di bosco + Mandorle', category: 'colazione', isComposite: true, ingredientIds: ['ing_avena', 'ing_frutti_bosco', 'ing_mandorle'], tags: ['pre-workout', 'energy'] },
+    { id: 'dish_26', name: 'Skyr + Banana + Semi di chia', category: 'colazione', isComposite: true, ingredientIds: ['ing_skyr', 'ing_banana', 'ing_semi_chia'], tags: ['high-protein'] },
+    { id: 'dish_27', name: 'Uova + Pane integrale + Avocado', category: 'colazione', isComposite: true, ingredientIds: ['ing_uova', 'ing_pane_int', 'ing_avocado'], tags: ['protein', 'healthy-fats'] },
     // Spuntini
     { id: 'dish_16', name: 'Frutta + Cracker (Andrea)', category: 'spuntino', isComposite: true, ingredientIds: ['ing_frutta', 'ing_cracker'], person: 'andrea' },
     { id: 'dish_17', name: 'Yogurt greco + Burro d\'arachidi (Gaia)', category: 'spuntino', isComposite: true, ingredientIds: ['ing_yogurt_greco', 'ing_burro_arachidi'], person: 'gaia' },
+    // Sport-focused snacks
+    { id: 'dish_28', name: 'Fiocchi di latte + Frutti di bosco', category: 'spuntino', isComposite: true, ingredientIds: ['ing_fiocchi_latte', 'ing_frutti_bosco'], tags: ['recovery', 'casein'] },
+    { id: 'dish_29', name: 'Hummus + Verdure fresche', category: 'spuntino', isComposite: true, ingredientIds: ['ing_hummus', 'ing_verdure_fresche'], tags: ['protein', 'fiber'] },
+    { id: 'dish_30', name: 'Edamame (snack proteico)', category: 'spuntino', isComposite: true, ingredientIds: ['ing_edamame'], tags: ['plant-protein', 'quick'] },
+    { id: 'dish_31', name: 'Mela + Burro d\'arachidi', category: 'spuntino', isComposite: true, ingredientIds: ['ing_mela', 'ing_burro_arachidi'], tags: ['pre-workout', 'energy'] },
+    // PRE-WORKOUT meals (2-3h before training)
+    { id: 'dish_32', name: 'Pasta integrale + Pollo leggero', category: 'pre_workout', isComposite: true, ingredientIds: ['ing_pasta_int', 'ing_pollo'], tags: ['energy', 'carbs'] },
+    { id: 'dish_33', name: 'Riso + Tacchino + Zucchine', category: 'pre_workout', isComposite: true, ingredientIds: ['ing_riso_int', 'ing_tacchino', 'ing_zucchine'], tags: ['balanced'] },
+    { id: 'dish_34', name: 'Porridge + Banana + Miele', category: 'pre_workout', isComposite: true, ingredientIds: ['ing_avena', 'ing_banana', 'ing_miele'], tags: ['energy', 'quick-release'] },
+    { id: 'dish_35', name: 'Pane integrale + Banana', category: 'pre_workout', isComposite: true, ingredientIds: ['ing_pane_int', 'ing_banana'], tags: ['quick', 'carbs'] },
+    // POST-WORKOUT meals (within 1h after training)
+    { id: 'dish_36', name: 'Pollo + Riso basmati + Spinaci (Recovery)', category: 'post_workout', isComposite: true, ingredientIds: ['ing_pollo', 'ing_riso_basmati', 'ing_spinaci'], tags: ['protein', 'fast-carbs'] },
+    { id: 'dish_37', name: 'Skyr + Banana + Miele', category: 'post_workout', isComposite: true, ingredientIds: ['ing_skyr', 'ing_banana', 'ing_miele'], tags: ['protein', 'glycogen'] },
+    { id: 'dish_38', name: 'Uova + Pane integrale (Post-palestra)', category: 'post_workout', isComposite: true, ingredientIds: ['ing_uova', 'ing_pane_int'], tags: ['protein', 'carbs'] },
+    { id: 'dish_39', name: 'Salmone + Patate dolci (Post-nuoto)', category: 'post_workout', isComposite: true, ingredientIds: ['ing_salmone', 'ing_patate_dolci'], tags: ['omega-3', 'recovery'] },
+    { id: 'dish_40', name: 'Yogurt greco + Frutti di bosco + Mandorle', category: 'post_workout', isComposite: true, ingredientIds: ['ing_yogurt_greco', 'ing_frutti_bosco', 'ing_mandorle'], tags: ['antioxidants', 'protein'] },
   ];
 
   useEffect(() => {
@@ -742,6 +806,52 @@ function App() {
   const ingredients = dishes.filter(d => d.isIngredient);
   const composedDishes = dishes.filter(d => !d.isIngredient);
 
+  // Get sport events for smart suggestions
+  const getSportEventsForWeek = () => {
+    const weekDays = [];
+    for (let i = 0; i < 7; i++) {
+      const day = viewingWeekStart + i;
+      if (day <= getDaysInMonth(selectedMonth)) {
+        const dayEvents = events.filter(
+          e => e.month === selectedMonth &&
+          e.startDay <= day && e.endDay >= day &&
+          (e.categoryId === 'sport' || e.categoryId === 'sport_gaia')
+        );
+        if (dayEvents.length > 0) {
+          weekDays.push({ day, events: dayEvents });
+        }
+      }
+    }
+    return weekDays;
+  };
+
+  // Get suggested meals based on workout type and timing
+  const getSuggestedMeals = (sportEvent) => {
+    const subtypeId = sportEvent.subtypeId;
+    const timeSlot = sportEvent.timeSlot;
+    const suggestions = { pre: [], post: [] };
+
+    // Pre-workout suggestions
+    const preWorkoutDishes = composedDishes.filter(d => d.category === 'pre_workout');
+    suggestions.pre = preWorkoutDishes.slice(0, 2);
+
+    // Post-workout suggestions based on sport type
+    const postWorkoutDishes = composedDishes.filter(d => d.category === 'post_workout');
+    if (subtypeId.includes('nuoto')) {
+      suggestions.post = postWorkoutDishes.filter(d => d.name.includes('nuoto') || d.tags?.includes('omega-3'));
+    } else if (subtypeId.includes('palestra')) {
+      suggestions.post = postWorkoutDishes.filter(d => d.name.includes('palestra') || d.tags?.includes('protein'));
+    } else {
+      suggestions.post = postWorkoutDishes.slice(0, 2);
+    }
+
+    if (suggestions.post.length === 0) suggestions.post = postWorkoutDishes.slice(0, 2);
+
+    return suggestions;
+  };
+
+  const sportWeekEvents = getSportEventsForWeek();
+
   // Function to add ingredient
   const addIngredient = () => {
     if (!newDishName.trim()) return;
@@ -791,6 +901,38 @@ function App() {
   // Render Alimentazione Page inline (to avoid re-render issues)
   const renderAlimentazionePage = () => (
     <div className="pb-20">
+      {/* Smart Suggestions Banner - shows when there are sport events this week */}
+      {sportWeekEvents.length > 0 && alimentazioneTab !== 'ingredienti' && (
+        <div className="bg-gradient-to-r from-green-500 via-cyan-500 to-blue-500 p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Dumbbell className="w-5 h-5 text-white" />
+            <h3 className="text-white font-semibold">Suggerimenti Sport</h3>
+            <span className="bg-white/20 text-white text-xs px-2 py-0.5 rounded-full">{sportWeekEvents.length} allenamenti</span>
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {sportWeekEvents.slice(0, 3).map(({ day, events: dayEvents }) => {
+              const dayOfWeek = new Date(2026, selectedMonth, day).getDay();
+              const dayName = weekDaysFull[dayOfWeek === 0 ? 6 : dayOfWeek - 1];
+              return (
+                <div key={day} className="bg-white/10 backdrop-blur-sm rounded-xl p-3 min-w-[140px] flex-shrink-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-white font-bold">{day}</span>
+                    <span className="text-white/80 text-xs">{dayName}</span>
+                  </div>
+                  {dayEvents.slice(0, 2).map(evt => (
+                    <div key={evt.id} className="text-white/90 text-xs flex items-center gap-1">
+                      {evt.timeSlot === 'mattina' ? <Sun className="w-3 h-3" /> : <Moon className="w-3 h-3" />}
+                      <span>{evt.subtypeName}</span>
+                      {evt.categoryId === 'sport_gaia' && <span className="text-pink-200">(G)</span>}
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Tabs with icons */}
       <div className="bg-white border-b sticky top-[52px] z-30">
         <div className="flex">
@@ -904,6 +1046,44 @@ function App() {
       {/* PIATTI TAB */}
       {alimentazioneTab === 'piatti' && (
         <div className="p-4">
+          {/* Quick Sport Meals Section */}
+          {sportWeekEvents.length > 0 && (
+            <div className="mb-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Dumbbell className="w-5 h-5 text-green-600" />
+                <h3 className="font-semibold text-gray-800">Pasti per Allenamento</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl p-3">
+                  <div className="flex items-center gap-1 mb-2 text-white">
+                    <span>💪</span>
+                    <span className="text-sm font-medium">Pre-Workout</span>
+                  </div>
+                  <div className="space-y-1">
+                    {composedDishes.filter(d => d.category === 'pre_workout').slice(0, 2).map(dish => (
+                      <div key={dish.id} className="bg-white/20 rounded-lg px-2 py-1.5 text-xs text-white truncate">
+                        {dish.name.split(' + ')[0]}...
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="bg-gradient-to-br from-cyan-500 to-blue-500 rounded-xl p-3">
+                  <div className="flex items-center gap-1 mb-2 text-white">
+                    <span>🔄</span>
+                    <span className="text-sm font-medium">Post-Workout</span>
+                  </div>
+                  <div className="space-y-1">
+                    {composedDishes.filter(d => d.category === 'post_workout').slice(0, 2).map(dish => (
+                      <div key={dish.id} className="bg-white/20 rounded-lg px-2 py-1.5 text-xs text-white truncate">
+                        {dish.name.split(' + ')[0]}...
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Compose new dish */}
           {!isComposing ? (
             <button
@@ -1119,27 +1299,48 @@ function App() {
               const dayOfWeek = new Date(2026, selectedMonth, day).getDay();
               const dayName = weekDaysFull[dayOfWeek === 0 ? 6 : dayOfWeek - 1];
               const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-              const hasMeals = Object.values(dayMeals).some(arr => arr && arr.length > 0);
+              // Check for sport events on this day
+              const daySportEvents = events.filter(
+                e => e.month === selectedMonth &&
+                e.startDay <= day && e.endDay >= day &&
+                (e.categoryId === 'sport' || e.categoryId === 'sport_gaia')
+              );
+              const hasWorkout = daySportEvents.length > 0;
 
               return (
                 <div
                   key={day}
-                  className={`bg-white rounded-2xl overflow-hidden shadow-sm border ${isWeekend ? 'border-purple-200' : 'border-gray-100'}`}
+                  className={`bg-white rounded-2xl overflow-hidden shadow-sm border ${hasWorkout ? 'border-green-300 ring-1 ring-green-200' : isWeekend ? 'border-purple-200' : 'border-gray-100'}`}
                 >
                   {/* Day header */}
-                  <div className={`px-4 py-3 flex items-center justify-between ${isWeekend ? 'bg-purple-50' : 'bg-gray-50'}`}>
+                  <div className={`px-4 py-3 flex items-center justify-between ${hasWorkout ? 'bg-gradient-to-r from-green-50 to-cyan-50' : isWeekend ? 'bg-purple-50' : 'bg-gray-50'}`}>
                     <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white ${isWeekend ? 'bg-purple-500' : 'bg-orange-500'}`}>
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white ${hasWorkout ? 'bg-gradient-to-br from-green-500 to-cyan-500' : isWeekend ? 'bg-purple-500' : 'bg-orange-500'}`}>
                         {day}
                       </div>
                       <div>
-                        <p className={`font-semibold ${isWeekend ? 'text-purple-700' : 'text-gray-800'}`}>{dayName}</p>
-                        <p className="text-xs text-gray-400">{months[selectedMonth]}</p>
+                        <div className="flex items-center gap-2">
+                          <p className={`font-semibold ${hasWorkout ? 'text-green-700' : isWeekend ? 'text-purple-700' : 'text-gray-800'}`}>{dayName}</p>
+                          {hasWorkout && (
+                            <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full flex items-center gap-1">
+                              <Dumbbell className="w-3 h-3" />
+                              {daySportEvents.length}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <p className="text-xs text-gray-400">{months[selectedMonth]}</p>
+                          {hasWorkout && (
+                            <span className="text-xs text-green-600">
+                              {daySportEvents.map(e => e.subtypeName).join(', ')}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <button
                       onClick={() => setSelectedMealDay({ month: selectedMonth, day })}
-                      className={`p-2 rounded-xl transition-colors ${isWeekend ? 'bg-purple-100 text-purple-600 hover:bg-purple-200' : 'bg-orange-100 text-orange-600 hover:bg-orange-200'}`}
+                      className={`p-2 rounded-xl transition-colors ${hasWorkout ? 'bg-green-100 text-green-600 hover:bg-green-200' : isWeekend ? 'bg-purple-100 text-purple-600 hover:bg-purple-200' : 'bg-orange-100 text-orange-600 hover:bg-orange-200'}`}
                     >
                       <Plus className="w-5 h-5" />
                     </button>
