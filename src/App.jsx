@@ -172,6 +172,15 @@ function App() {
   const [newDishCategory, setNewDishCategory] = useState('primo');
   const [editingDish, setEditingDish] = useState(null);
   const [selectedMealDay, setSelectedMealDay] = useState(null);
+  const [alimentazioneTab, setAlimentazioneTab] = useState('piatti');
+  const [mealPickerSlot, setMealPickerSlot] = useState('pranzo');
+
+  // Calculate current week start
+  const today = new Date();
+  const currentDayOfMonth = today.getDate();
+  const [viewingWeekStart, setViewingWeekStart] = useState(() => {
+    return Math.max(1, currentDayOfMonth - ((today.getDay() + 6) % 7));
+  });
 
   const dishCategories = [
     { id: 'primo', name: 'Primi', color: 'bg-yellow-500' },
@@ -623,183 +632,311 @@ function App() {
     </div>
   );
 
-  // Alimentazione Page
-  const AlimentazionePage = () => {
-    const [activeTab, setActiveTab] = useState('piatti');
-    const today = new Date();
-    const currentDay = today.getDate();
-    const [viewingWeekStart, setViewingWeekStart] = useState(Math.max(1, currentDay - ((today.getDay() + 6) % 7)));
-
-    const getWeekDays = () => {
-      const days = [];
-      for (let i = 0; i < 7; i++) {
-        const day = viewingWeekStart + i;
-        if (day <= getDaysInMonth(selectedMonth)) {
-          days.push(day);
-        }
+  // Helper function for week days in Alimentazione
+  const getWeekDays = () => {
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const day = viewingWeekStart + i;
+      if (day <= getDaysInMonth(selectedMonth)) {
+        days.push(day);
       }
-      return days;
-    };
+    }
+    return days;
+  };
 
-    return (
-      <div className="pb-20">
-        {/* Tabs */}
-        <div className="bg-white border-b sticky top-[52px] z-30">
-          <div className="flex">
-            <button onClick={() => setActiveTab('piatti')} className={`flex-1 py-3 text-sm font-medium border-b-2 ${activeTab === 'piatti' ? 'border-orange-500 text-orange-600' : 'border-transparent text-gray-500'}`}>
-              Piatti
-            </button>
-            <button onClick={() => setActiveTab('planning')} className={`flex-1 py-3 text-sm font-medium border-b-2 ${activeTab === 'planning' ? 'border-orange-500 text-orange-600' : 'border-transparent text-gray-500'}`}>
-              Pianificazione
-            </button>
-          </div>
+  // Render Alimentazione Page inline (to avoid re-render issues)
+  const renderAlimentazionePage = () => (
+    <div className="pb-20">
+      {/* Tabs with icons */}
+      <div className="bg-white border-b sticky top-[52px] z-30">
+        <div className="flex">
+          <button
+            onClick={() => setAlimentazioneTab('piatti')}
+            className={`flex-1 py-3 flex items-center justify-center gap-2 text-sm font-medium border-b-2 transition-colors ${alimentazioneTab === 'piatti' ? 'border-orange-500 text-orange-600 bg-orange-50/50' : 'border-transparent text-gray-500'}`}
+          >
+            <ChefHat className="w-4 h-4" />
+            I Miei Piatti
+          </button>
+          <button
+            onClick={() => setAlimentazioneTab('planning')}
+            className={`flex-1 py-3 flex items-center justify-center gap-2 text-sm font-medium border-b-2 transition-colors ${alimentazioneTab === 'planning' ? 'border-orange-500 text-orange-600 bg-orange-50/50' : 'border-transparent text-gray-500'}`}
+          >
+            <Calendar className="w-4 h-4" />
+            Pianifica Pasti
+          </button>
         </div>
+      </div>
 
-        {activeTab === 'piatti' && (
-          <div className="p-3">
-            {/* Add new dish */}
-            <div className="bg-white rounded-xl p-3 shadow-sm mb-4">
-              <h3 className="font-medium text-gray-800 mb-2">Aggiungi piatto</h3>
-              <div className="flex gap-2 mb-2">
-                <input type="text" value={newDishName} onChange={(e) => setNewDishName(e.target.value)} placeholder="Nome piatto" className="flex-1 px-3 py-2 border rounded-lg text-sm" />
-                <button onClick={addDish} className="bg-orange-500 text-white px-4 py-2 rounded-lg"><Plus className="w-5 h-5" /></button>
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {dishCategories.map(cat => (
-                  <button key={cat.id} onClick={() => setNewDishCategory(cat.id)} className={`px-3 py-1 rounded-full text-xs ${newDishCategory === cat.id ? cat.color + ' text-white' : 'bg-gray-100'}`}>
-                    {cat.name}
-                  </button>
-                ))}
-              </div>
+      {alimentazioneTab === 'piatti' && (
+        <div className="p-4">
+          {/* Add new dish - improved design */}
+          <div className="bg-gradient-to-br from-orange-500 to-amber-500 rounded-2xl p-4 shadow-lg mb-5">
+            <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
+              <Plus className="w-5 h-5" />
+              Aggiungi un nuovo piatto
+            </h3>
+            <div className="flex gap-2 mb-3">
+              <input
+                type="text"
+                value={newDishName}
+                onChange={(e) => setNewDishName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addDish()}
+                placeholder="Es: Pasta al pomodoro, Insalata mista..."
+                className="flex-1 px-4 py-3 border-0 rounded-xl text-sm focus:ring-2 focus:ring-white/50 shadow-inner"
+              />
+              <button
+                onClick={addDish}
+                disabled={!newDishName.trim()}
+                className="bg-white text-orange-600 px-5 py-3 rounded-xl font-medium shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Plus className="w-5 h-5" />
+              </button>
             </div>
-
-            {/* Dishes list by category */}
-            {dishCategories.map(cat => {
-              const catDishes = dishes.filter(d => d.category === cat.id);
-              if (catDishes.length === 0) return null;
-              return (
-                <div key={cat.id} className="mb-4">
-                  <h4 className={`text-sm font-medium mb-2 ${cat.color.replace('bg-', 'text-').replace('500', '700')}`}>{cat.name}</h4>
-                  <div className="space-y-1">
-                    {catDishes.map(dish => (
-                      <div key={dish.id} className="bg-white rounded-lg px-3 py-2 flex items-center justify-between shadow-sm">
-                        <span className="text-sm">{dish.name}</span>
-                        <div className="flex items-center gap-2">
-                          <button onClick={() => toggleDishFavorite(dish.id)} className={dish.favorite ? 'text-yellow-500' : 'text-gray-300'}>
-                            <Star className="w-4 h-4" fill={dish.favorite ? 'currentColor' : 'none'} />
-                          </button>
-                          <button onClick={() => removeDish(dish.id)} className="text-gray-400 hover:text-red-500">
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-
-            {dishes.length === 0 && (
-              <div className="text-center text-gray-400 py-8">
-                <UtensilsCrossed className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                <p>Nessun piatto aggiunto</p>
-              </div>
-            )}
+            <div className="flex flex-wrap gap-2">
+              {dishCategories.map(cat => (
+                <button
+                  key={cat.id}
+                  onClick={() => setNewDishCategory(cat.id)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${newDishCategory === cat.id ? 'bg-white text-orange-600 shadow-md scale-105' : 'bg-white/20 text-white hover:bg-white/30'}`}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
           </div>
-        )}
 
-        {activeTab === 'planning' && (
-          <div className="p-3">
-            {/* Week navigation */}
-            <div className="flex items-center justify-between mb-3">
-              <button onClick={() => setViewingWeekStart(Math.max(1, viewingWeekStart - 7))} className="p-2 bg-gray-100 rounded-full">
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <span className="text-sm font-medium">{months[selectedMonth]} - Settimana del {viewingWeekStart}</span>
-              <button onClick={() => setViewingWeekStart(Math.min(getDaysInMonth(selectedMonth) - 6, viewingWeekStart + 7))} className="p-2 bg-gray-100 rounded-full">
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Week days */}
-            <div className="space-y-3">
-              {getWeekDays().map(day => {
-                const dayMeals = getMealsForDay(selectedMonth, day);
-                const dayOfWeek = new Date(2026, selectedMonth, day).getDay();
-                const dayName = weekDaysFull[dayOfWeek === 0 ? 6 : dayOfWeek - 1];
-
-                return (
-                  <div key={day} className="bg-white rounded-xl p-3 shadow-sm">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full">{day}</span>
-                        <span className="font-medium text-sm">{dayName}</span>
+          {/* Dishes list by category - improved */}
+          {dishCategories.map(cat => {
+            const catDishes = dishes.filter(d => d.category === cat.id);
+            if (catDishes.length === 0) return null;
+            return (
+              <div key={cat.id} className="mb-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className={`w-3 h-3 rounded-full ${cat.color}`}></div>
+                  <h4 className="text-sm font-semibold text-gray-700">{cat.name}</h4>
+                  <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{catDishes.length}</span>
+                </div>
+                <div className="grid grid-cols-1 gap-2">
+                  {catDishes.map(dish => (
+                    <div
+                      key={dish.id}
+                      className="bg-white rounded-xl px-4 py-3 flex items-center justify-between shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-2 h-8 rounded-full ${cat.color}`}></div>
+                        <span className="font-medium text-gray-800">{dish.name}</span>
                       </div>
-                      <button onClick={() => setSelectedMealDay({ month: selectedMonth, day })} className="text-orange-500">
-                        <Plus className="w-5 h-5" />
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => toggleDishFavorite(dish.id)}
+                          className={`p-1.5 rounded-full transition-all ${dish.favorite ? 'text-yellow-500 bg-yellow-50' : 'text-gray-300 hover:text-yellow-400'}`}
+                        >
+                          <Star className="w-5 h-5" fill={dish.favorite ? 'currentColor' : 'none'} />
+                        </button>
+                        <button
+                          onClick={() => removeDish(dish.id)}
+                          className="p-1.5 rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
                     </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
 
-                    <div className="grid grid-cols-3 gap-2 text-xs">
-                      {['colazione', 'pranzo', 'cena'].map(slot => (
-                        <div key={slot} className="bg-gray-50 rounded-lg p-2">
-                          <div className="text-gray-500 mb-1 capitalize">{slot}</div>
-                          <div className="space-y-1">
-                            {(dayMeals[slot] || []).map(meal => (
-                              <div key={meal.id} className="bg-white rounded px-1.5 py-0.5 flex items-center justify-between">
-                                <span className="truncate">{meal.dishName}</span>
-                                <button onClick={() => removeMealFromDaySlot(selectedMonth, day, slot, meal.id)} className="text-gray-300 hover:text-red-500 ml-1">
-                                  <X className="w-3 h-3" />
-                                </button>
-                              </div>
-                            ))}
+          {dishes.length === 0 && (
+            <div className="text-center py-12">
+              <div className="bg-orange-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <UtensilsCrossed className="w-10 h-10 text-orange-400" />
+              </div>
+              <h3 className="font-semibold text-gray-700 mb-2">Nessun piatto salvato</h3>
+              <p className="text-gray-400 text-sm">Inizia aggiungendo i tuoi piatti preferiti!</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {alimentazioneTab === 'planning' && (
+        <div className="p-4">
+          {/* Week navigation - improved */}
+          <div className="bg-white rounded-2xl p-4 shadow-sm mb-4 flex items-center justify-between">
+            <button
+              onClick={() => setViewingWeekStart(Math.max(1, viewingWeekStart - 7))}
+              className="p-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <div className="text-center">
+              <p className="text-xs text-gray-400 uppercase tracking-wide">Settimana</p>
+              <p className="font-semibold text-gray-800">{viewingWeekStart} - {Math.min(viewingWeekStart + 6, getDaysInMonth(selectedMonth))} {months[selectedMonth]}</p>
+            </div>
+            <button
+              onClick={() => setViewingWeekStart(Math.min(getDaysInMonth(selectedMonth) - 6, viewingWeekStart + 7))}
+              className="p-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Week days - improved */}
+          <div className="space-y-4">
+            {getWeekDays().map(day => {
+              const dayMeals = getMealsForDay(selectedMonth, day);
+              const dayOfWeek = new Date(2026, selectedMonth, day).getDay();
+              const dayName = weekDaysFull[dayOfWeek === 0 ? 6 : dayOfWeek - 1];
+              const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+              const hasMeals = Object.values(dayMeals).some(arr => arr && arr.length > 0);
+
+              return (
+                <div
+                  key={day}
+                  className={`bg-white rounded-2xl overflow-hidden shadow-sm border ${isWeekend ? 'border-purple-200' : 'border-gray-100'}`}
+                >
+                  {/* Day header */}
+                  <div className={`px-4 py-3 flex items-center justify-between ${isWeekend ? 'bg-purple-50' : 'bg-gray-50'}`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white ${isWeekend ? 'bg-purple-500' : 'bg-orange-500'}`}>
+                        {day}
+                      </div>
+                      <div>
+                        <p className={`font-semibold ${isWeekend ? 'text-purple-700' : 'text-gray-800'}`}>{dayName}</p>
+                        <p className="text-xs text-gray-400">{months[selectedMonth]}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setSelectedMealDay({ month: selectedMonth, day })}
+                      className={`p-2 rounded-xl transition-colors ${isWeekend ? 'bg-purple-100 text-purple-600 hover:bg-purple-200' : 'bg-orange-100 text-orange-600 hover:bg-orange-200'}`}
+                    >
+                      <Plus className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  {/* Meals grid */}
+                  <div className="p-3">
+                    <div className="grid grid-cols-3 gap-3">
+                      {[
+                        { slot: 'colazione', icon: Coffee, label: 'Colazione', color: 'amber' },
+                        { slot: 'pranzo', icon: Sun, label: 'Pranzo', color: 'orange' },
+                        { slot: 'cena', icon: Moon, label: 'Cena', color: 'indigo' }
+                      ].map(({ slot, icon: SlotIcon, label, color }) => (
+                        <div
+                          key={slot}
+                          className={`rounded-xl p-2 bg-${color}-50 border border-${color}-100`}
+                          onClick={() => { setSelectedMealDay({ month: selectedMonth, day }); setMealPickerSlot(slot); }}
+                        >
+                          <div className={`flex items-center gap-1 mb-2 text-${color}-600`}>
+                            <SlotIcon className="w-3 h-3" />
+                            <span className="text-xs font-medium">{label}</span>
+                          </div>
+                          <div className="space-y-1 min-h-[40px]">
+                            {(dayMeals[slot] || []).length > 0 ? (
+                              (dayMeals[slot] || []).map(meal => (
+                                <div
+                                  key={meal.id}
+                                  className="bg-white rounded-lg px-2 py-1.5 text-xs flex items-center justify-between shadow-sm"
+                                >
+                                  <span className="truncate font-medium text-gray-700">{meal.dishName}</span>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); removeMealFromDaySlot(selectedMonth, day, slot, meal.id); }}
+                                    className="text-gray-300 hover:text-red-500 ml-1 flex-shrink-0"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="text-xs text-gray-300 text-center py-2">-</div>
+                            )}
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
           </div>
-        )}
-      </div>
-    );
-  };
 
-  // Meal picker modal
-  const MealPickerModal = () => {
+          {dishes.length === 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mt-4">
+              <p className="text-amber-700 text-sm text-center">
+                Aggiungi prima dei piatti nella sezione "I Miei Piatti" per poterli pianificare!
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  // Render Meal picker modal inline
+  const renderMealPickerModal = () => {
     if (!selectedMealDay) return null;
-    const [selectedSlot, setSelectedSlot] = useState('pranzo');
+
+    const favoriteFirst = [...dishes].sort((a, b) => (b.favorite ? 1 : 0) - (a.favorite ? 1 : 0));
 
     return (
       <div className="fixed inset-0 bg-black/50 z-50 flex items-end" onClick={() => setSelectedMealDay(null)}>
-        <div className="bg-white w-full rounded-t-2xl max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-          <div className="sticky top-0 bg-white border-b p-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold">Aggiungi pasto - {selectedMealDay.day} {months[selectedMealDay.month]}</h3>
-              <button onClick={() => setSelectedMealDay(null)}><X className="w-6 h-6" /></button>
+        <div className="bg-white w-full rounded-t-3xl max-h-[85vh] overflow-hidden" onClick={e => e.stopPropagation()}>
+          {/* Header */}
+          <div className="bg-gradient-to-r from-orange-500 to-amber-500 p-5 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="text-orange-100 text-sm">Aggiungi pasto per</p>
+                <h3 className="font-bold text-xl">{selectedMealDay.day} {months[selectedMealDay.month]}</h3>
+              </div>
+              <button onClick={() => setSelectedMealDay(null)} className="p-2 bg-white/20 rounded-xl">
+                <X className="w-6 h-6" />
+              </button>
             </div>
-            <div className="flex gap-2 mt-3">
-              {['colazione', 'pranzo', 'cena'].map(slot => (
-                <button key={slot} onClick={() => setSelectedSlot(slot)} className={`flex-1 py-2 rounded-lg text-sm ${selectedSlot === slot ? 'bg-orange-500 text-white' : 'bg-gray-100'}`}>
-                  {slot.charAt(0).toUpperCase() + slot.slice(1)}
+
+            {/* Slot selector */}
+            <div className="flex gap-2">
+              {[
+                { slot: 'colazione', icon: Coffee, label: 'Colazione' },
+                { slot: 'pranzo', icon: Sun, label: 'Pranzo' },
+                { slot: 'cena', icon: Moon, label: 'Cena' }
+              ].map(({ slot, icon: SlotIcon, label }) => (
+                <button
+                  key={slot}
+                  onClick={() => setMealPickerSlot(slot)}
+                  className={`flex-1 py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-all ${mealPickerSlot === slot ? 'bg-white text-orange-600 shadow-lg' : 'bg-white/20 text-white hover:bg-white/30'}`}
+                >
+                  <SlotIcon className="w-4 h-4" />
+                  {label}
                 </button>
               ))}
             </div>
           </div>
-          <div className="p-4">
+
+          {/* Dishes list */}
+          <div className="p-4 overflow-y-auto max-h-[60vh]">
             {dishes.length === 0 ? (
-              <p className="text-center text-gray-400 py-4">Aggiungi prima dei piatti nella sezione Piatti</p>
+              <div className="text-center py-8">
+                <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <UtensilsCrossed className="w-8 h-8 text-gray-400" />
+                </div>
+                <p className="text-gray-500">Nessun piatto disponibile</p>
+                <p className="text-gray-400 text-sm">Vai su "I Miei Piatti" per aggiungerne</p>
+              </div>
             ) : (
               <div className="space-y-2">
-                {dishes.map(dish => {
+                {favoriteFirst.map(dish => {
                   const cat = dishCategories.find(c => c.id === dish.category);
                   return (
-                    <button key={dish.id} onClick={() => { addMealToDaySlot(selectedMealDay.month, selectedMealDay.day, selectedSlot, dish.id); setSelectedMealDay(null); }}
-                      className="w-full text-left p-3 bg-gray-50 rounded-lg flex items-center justify-between">
-                      <span>{dish.name}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${cat?.color} text-white`}>{cat?.name}</span>
+                    <button
+                      key={dish.id}
+                      onClick={() => { addMealToDaySlot(selectedMealDay.month, selectedMealDay.day, mealPickerSlot, dish.id); setSelectedMealDay(null); }}
+                      className="w-full text-left p-4 bg-gray-50 rounded-xl flex items-center justify-between hover:bg-gray-100 transition-colors active:scale-[0.98]"
+                    >
+                      <div className="flex items-center gap-3">
+                        {dish.favorite && <Star className="w-4 h-4 text-yellow-500" fill="currentColor" />}
+                        <span className="font-medium text-gray-800">{dish.name}</span>
+                      </div>
+                      <span className={`text-xs px-3 py-1 rounded-full ${cat?.color} text-white`}>{cat?.name}</span>
                     </button>
                   );
                 })}
@@ -1009,12 +1146,12 @@ function App() {
     <div className="min-h-screen bg-gray-100">
       <Header />
       {currentPage === 'calendar' && <CalendarPage />}
-      {currentPage === 'alimentazione' && <AlimentazionePage />}
+      {currentPage === 'alimentazione' && renderAlimentazionePage()}
       <BottomNav />
       <DayModal />
       <StatsModal />
       <ResetConfirmModal />
-      <MealPickerModal />
+      {renderMealPickerModal()}
       {draggedItem && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg text-sm z-40">
           Trascinando: {draggedItem.text}
