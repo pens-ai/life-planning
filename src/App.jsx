@@ -145,6 +145,8 @@ const MEALS_KEY = 'life-planner-2026-meals';
 function App() {
   const [currentPage, setCurrentPage] = useState('calendar');
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [calendarView, setCalendarView] = useState('month'); // 'day', '3days', 'week', 'month'
+  const [focusDay, setFocusDay] = useState(new Date().getDate());
   const [events, setEvents] = useState([]);
   const [selectedDay, setSelectedDay] = useState(null);
   const [addingTo, setAddingTo] = useState(null);
@@ -602,7 +604,6 @@ function App() {
   };
 
   const getEventsForDay = (month, day) => events.filter(e => e.month === month && day >= e.startDay && day <= e.endDay);
-  const getEventsStartingOnDay = (month, day) => events.filter(e => e.month === month && e.startDay === day);
 
   const handleDragStart = (e, event) => { setDraggedItem(event); e.dataTransfer.effectAllowed = 'move'; };
   const handleDragOver = (e, day, isCurrentMonth) => { e.preventDefault(); if (isCurrentMonth && draggedItem) setDragOverDay(day); };
@@ -734,141 +735,341 @@ function App() {
       return now.getFullYear() === 2026 && now.getMonth() === month && now.getDate() === day;
     };
 
+    // Get days to display based on view mode
+    const getViewDays = () => {
+      const maxDay = getDaysInMonth(selectedMonth);
+      switch (calendarView) {
+        case 'day':
+          return [focusDay];
+        case '3days':
+          return [focusDay, Math.min(focusDay + 1, maxDay), Math.min(focusDay + 2, maxDay)].filter((d, i, arr) => arr.indexOf(d) === i);
+        case 'week': {
+          const date = new Date(2026, selectedMonth, focusDay);
+          const dayOfWeek = date.getDay();
+          const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+          const monday = focusDay + mondayOffset;
+          const days = [];
+          for (let i = 0; i < 7; i++) {
+            const d = monday + i;
+            if (d >= 1 && d <= maxDay) days.push(d);
+          }
+          return days;
+        }
+        default:
+          return null; // Full month
+      }
+    };
+
+    const viewDays = getViewDays();
+
+    // Navigate in day/3days/week views
+    const navigateView = (direction) => {
+      const maxDay = getDaysInMonth(selectedMonth);
+      let step = calendarView === 'day' ? 1 : calendarView === '3days' ? 3 : 7;
+      let newDay = focusDay + (direction * step);
+
+      if (newDay < 1) {
+        if (selectedMonth > 0) {
+          setSelectedMonth(selectedMonth - 1);
+          setFocusDay(getDaysInMonth(selectedMonth - 1) + newDay);
+        }
+      } else if (newDay > maxDay) {
+        if (selectedMonth < 11) {
+          setSelectedMonth(selectedMonth + 1);
+          setFocusDay(newDay - maxDay);
+        }
+      } else {
+        setFocusDay(newDay);
+      }
+    };
+
     return (
       <div className="pb-20">
         {/* Month navigation - improved */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-4 flex items-center justify-between">
           <button
-            onClick={() => setSelectedMonth(Math.max(0, selectedMonth - 1))}
-            disabled={selectedMonth === 0}
+            onClick={() => calendarView === 'month' ? setSelectedMonth(Math.max(0, selectedMonth - 1)) : navigateView(-1)}
+            disabled={calendarView === 'month' && selectedMonth === 0}
             className="p-2 rounded-full bg-white/20 text-white disabled:opacity-30 hover:bg-white/30 transition-colors"
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
           <div className="text-center text-white">
-            <h2 className="text-2xl font-bold">{months[selectedMonth]}</h2>
+            <h2 className="text-2xl font-bold">
+              {calendarView === 'month' ? months[selectedMonth] :
+               calendarView === 'day' ? `${focusDay} ${months[selectedMonth]}` :
+               calendarView === '3days' ? `${focusDay}-${Math.min(focusDay + 2, getDaysInMonth(selectedMonth))} ${months[selectedMonth].slice(0, 3)}` :
+               `Settimana ${Math.ceil(focusDay / 7)}`}
+            </h2>
             <p className="text-sm text-white/70">2026</p>
           </div>
           <button
-            onClick={() => setSelectedMonth(Math.min(11, selectedMonth + 1))}
-            disabled={selectedMonth === 11}
+            onClick={() => calendarView === 'month' ? setSelectedMonth(Math.min(11, selectedMonth + 1)) : navigateView(1)}
+            disabled={calendarView === 'month' && selectedMonth === 11}
             className="p-2 rounded-full bg-white/20 text-white disabled:opacity-30 hover:bg-white/30 transition-colors"
           >
             <ChevronRight className="w-6 h-6" />
           </button>
         </div>
 
-        {/* Mini month selector - improved */}
-        <div className="bg-white px-2 py-3 border-b overflow-x-auto shadow-sm">
-          <div className="flex gap-1.5 justify-center">
-            {months.map((m, i) => (
-              <button
-                key={i}
-                onClick={() => setSelectedMonth(i)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-full whitespace-nowrap transition-all ${
-                  selectedMonth === i
-                    ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md scale-105'
-                    : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
-                }`}
-              >
-                {m.slice(0, 3)}
-              </button>
-            ))}
-          </div>
+        {/* View selector */}
+        <div className="bg-white px-3 py-2 border-b flex gap-2 justify-center">
+          {[
+            { id: 'day', label: 'Giorno', icon: '1' },
+            { id: '3days', label: '3 Giorni', icon: '3' },
+            { id: 'week', label: 'Settimana', icon: '7' },
+            { id: 'month', label: 'Mese', icon: '📅' },
+          ].map(view => (
+            <button
+              key={view.id}
+              onClick={() => { setCalendarView(view.id); if (view.id !== 'month') setFocusDay(new Date().getDate()); }}
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg flex items-center gap-1.5 transition-all ${
+                calendarView === view.id
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              <span className="w-5 h-5 rounded bg-white/20 flex items-center justify-center text-[10px] font-bold">
+                {view.icon}
+              </span>
+              {view.label}
+            </button>
+          ))}
         </div>
 
-        {/* Calendar grid - improved */}
-        <div className="bg-white">
-          {/* Week days header */}
-          <div className="grid grid-cols-7 border-b bg-gray-50">
-            {['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'].map((day, idx) => (
-              <div
-                key={day}
-                className={`py-3 text-center text-sm font-semibold ${
-                  idx >= 5 ? 'text-purple-600 bg-purple-50' : 'text-gray-600'
-                }`}
-              >
-                {day}
-              </div>
-            ))}
-          </div>
-
-          {/* Calendar days */}
-          <div className="grid grid-cols-7">
-            {calendarDays.map((dayObj, idx) => {
-              const isCurrentMonth = dayObj.currentMonth;
-              const isWeekend = idx % 7 >= 5;
-              const isTodayDate = isCurrentMonth && isToday(selectedMonth, dayObj.day);
-              const dayEvents = isCurrentMonth ? getEventsStartingOnDay(selectedMonth, dayObj.day) : [];
-              const allDayEvents = isCurrentMonth ? getEventsForDay(selectedMonth, dayObj.day) : [];
-              const hasSport = allDayEvents.some(e => e.categoryId === 'sport' || e.categoryId === 'sport_gaia');
-
-              return (
-                <div
-                  key={idx}
-                  onClick={() => isCurrentMonth && setSelectedDay(dayObj.day)}
-                  onDragOver={(e) => handleDragOver(e, dayObj.day, isCurrentMonth)}
-                  onDragLeave={handleDragLeave}
-                  onDrop={(e) => isCurrentMonth && handleDrop(e, selectedMonth, dayObj.day)}
-                  className={`
-                    min-h-[85px] p-1.5 border-b border-r border-gray-100 cursor-pointer
-                    transition-all duration-150
-                    ${isCurrentMonth ? 'hover:bg-blue-50' : 'opacity-30 cursor-default'}
-                    ${isWeekend && isCurrentMonth ? 'bg-purple-50/40' : ''}
-                    ${dragOverDay === dayObj.day && isCurrentMonth ? 'bg-blue-100 ring-2 ring-blue-400' : ''}
-                    ${isTodayDate ? 'bg-blue-50 ring-2 ring-blue-500 ring-inset' : ''}
-                  `}
+        {/* Mini month selector - only show in month view */}
+        {calendarView === 'month' && (
+          <div className="bg-white px-2 py-3 border-b overflow-x-auto shadow-sm">
+            <div className="flex gap-1.5 justify-center">
+              {months.map((m, i) => (
+                <button
+                  key={i}
+                  onClick={() => setSelectedMonth(i)}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-full whitespace-nowrap transition-all ${
+                    selectedMonth === i
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md scale-105'
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                  }`}
                 >
-                  {/* Day number */}
-                  <div className="flex items-center justify-between mb-1">
-                    <div className={`
-                      w-7 h-7 flex items-center justify-center rounded-full text-sm font-semibold
-                      ${isTodayDate
-                        ? 'bg-blue-600 text-white'
-                        : isWeekend && isCurrentMonth
-                          ? 'text-purple-700'
-                          : isCurrentMonth
-                            ? 'text-gray-800'
-                            : 'text-gray-300'
-                      }
-                    `}>
-                      {dayObj.day}
-                    </div>
-                    {hasSport && isCurrentMonth && (
-                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    )}
-                  </div>
+                  {m.slice(0, 3)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
-                  {/* Events */}
-                  <div className="space-y-0.5">
-                    {dayEvents.slice(0, 2).map(event => {
-                      const cat = categories.find(c => c.id === event.categoryId);
-                      const isSportEvent = event.categoryId === 'sport' || event.categoryId === 'sport_gaia';
-                      return (
-                        <div
-                          key={event.id}
-                          className={`${cat.bg} text-white text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1`}
-                        >
-                          {isSportEvent && (
-                            <span className="flex-shrink-0">
-                              {event.timeSlot === 'mattina' ? '☀️' : event.timeSlot === 'sera' ? '🌙' : '💪'}
-                            </span>
-                          )}
-                          <span className="truncate">{event.text.slice(0, 6)}</span>
+        {/* DAY / 3 DAYS / WEEK VIEW */}
+        {viewDays && (
+          <div className="bg-white">
+            {/* Days header for week view */}
+            {calendarView === 'week' && (
+              <div className={`grid grid-cols-${viewDays.length} border-b bg-gray-50`}>
+                {viewDays.map(day => {
+                  const date = new Date(2026, selectedMonth, day);
+                  const dayName = weekDaysFull[date.getDay() === 0 ? 6 : date.getDay() - 1];
+                  const isTodayDate = isToday(selectedMonth, day);
+                  return (
+                    <div key={day} className={`py-2 text-center ${isTodayDate ? 'bg-blue-100' : ''}`}>
+                      <div className="text-xs text-gray-500">{dayName}</div>
+                      <div className={`text-lg font-bold ${isTodayDate ? 'text-blue-600' : 'text-gray-800'}`}>{day}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Days content */}
+            <div className={calendarView === 'week' ? `grid grid-cols-${viewDays.length} divide-x min-h-[400px]` : ''}>
+              {viewDays.map(day => {
+                const dayEvents = getEventsForDay(selectedMonth, day);
+                const dayMeals = getMealsForDay(selectedMonth, day);
+                const date = new Date(2026, selectedMonth, day);
+                const dayName = weekDaysFull[date.getDay() === 0 ? 6 : date.getDay() - 1];
+                const isTodayDate = isToday(selectedMonth, day);
+
+                // Export function for Apple Reminders
+                const exportToReminders = () => {
+                  let text = `📅 ${day} ${months[selectedMonth]} 2026\n\n`;
+                  text += `== ATTIVITÀ ==\n`;
+                  dayEvents.forEach(e => {
+                    const cat = categories.find(c => c.id === e.categoryId);
+                    text += `- ${e.text}${e.timeSlot ? ` (${e.timeSlot})` : ''}\n`;
+                  });
+                  text += `\n== PASTI ==\n`;
+                  ['colazione', 'pranzo', 'cena'].forEach(slot => {
+                    if (dayMeals[slot]?.length) {
+                      text += `${slot.charAt(0).toUpperCase() + slot.slice(1)}:\n`;
+                      dayMeals[slot].forEach(m => { text += `  - ${m.dishName}\n`; });
+                    }
+                  });
+
+                  // Copy to clipboard
+                  navigator.clipboard.writeText(text).then(() => {
+                    alert('Copiato! Incolla in Apple Reminders');
+                  });
+                };
+
+                return (
+                  <div key={day} className={`p-3 ${calendarView !== 'week' ? 'border-b' : ''}`}>
+                    {/* Day header for day/3days view */}
+                    {calendarView !== 'week' && (
+                      <div className={`flex items-center justify-between mb-4 pb-3 border-b ${isTodayDate ? 'border-blue-300' : ''}`}>
+                        <div className="flex items-center gap-3">
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold ${isTodayDate ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800'}`}>
+                            {day}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-800">{dayName}</p>
+                            <p className="text-sm text-gray-500">{months[selectedMonth]} 2026</p>
+                          </div>
                         </div>
-                      );
-                    })}
-                    {allDayEvents.length > 2 && (
-                      <div className="text-[10px] text-gray-500 font-medium text-center bg-gray-100 rounded py-0.5">
-                        +{allDayEvents.length - 2} altri
+                        {calendarView === 'day' && (
+                          <button
+                            onClick={exportToReminders}
+                            className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg text-sm"
+                          >
+                            <Download className="w-4 h-4" />
+                            Reminders
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Events */}
+                    <div className="space-y-2 mb-4">
+                      <h4 className="text-xs font-semibold text-gray-500 uppercase">Attività</h4>
+                      {dayEvents.length > 0 ? dayEvents.map(event => {
+                        const cat = categories.find(c => c.id === event.categoryId);
+                        const Icon = cat.icon;
+                        return (
+                          <div key={event.id} className={`flex items-center gap-2 p-2 rounded-lg ${cat.light} border ${cat.border}`} onClick={() => setSelectedDay(day)}>
+                            <div className={`${cat.bg} p-1.5 rounded-lg`}><Icon className="w-4 h-4 text-white" /></div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium">{event.text}</p>
+                              {event.timeSlot && <span className="text-xs text-gray-500">{event.timeSlot === 'mattina' ? '☀️ Mattina' : '🌙 Sera'}</span>}
+                            </div>
+                          </div>
+                        );
+                      }) : <p className="text-sm text-gray-400 italic">Nessuna attività</p>}
+                    </div>
+
+                    {/* Meals - only in day view */}
+                    {calendarView === 'day' && (
+                      <div className="space-y-2 mt-4 pt-4 border-t">
+                        <h4 className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-2">
+                          <Utensils className="w-4 h-4" /> Pasti
+                        </h4>
+                        <div className="grid grid-cols-3 gap-2">
+                          {[
+                            { slot: 'colazione', label: 'Colazione', icon: '☀️', color: 'amber' },
+                            { slot: 'pranzo', label: 'Pranzo', icon: '🍽️', color: 'orange' },
+                            { slot: 'cena', label: 'Cena', icon: '🌙', color: 'indigo' }
+                          ].map(({ slot, label, icon, color }) => (
+                            <div key={slot} className={`bg-${color}-50 rounded-xl p-3 border border-${color}-200`}>
+                              <div className="flex items-center gap-1 mb-2">
+                                <span>{icon}</span>
+                                <span className={`text-xs font-medium text-${color}-700`}>{label}</span>
+                              </div>
+                              <div className="space-y-1">
+                                {(dayMeals[slot] || []).length > 0 ? (
+                                  (dayMeals[slot] || []).map(meal => (
+                                    <p key={meal.id} className="text-xs text-gray-700 truncate">{meal.dishName}</p>
+                                  ))
+                                ) : (
+                                  <p className="text-xs text-gray-400">-</p>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* MONTH VIEW - Calendar grid */}
+        {calendarView === 'month' && (
+          <div className="bg-white">
+            {/* Week days header */}
+            <div className="grid grid-cols-7 border-b bg-gray-50">
+              {['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'].map((day, idx) => (
+                <div
+                  key={day}
+                  className={`py-3 text-center text-sm font-semibold ${
+                    idx >= 5 ? 'text-purple-600 bg-purple-50' : 'text-gray-600'
+                  }`}
+                >
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            {/* Calendar days */}
+            <div className="grid grid-cols-7">
+              {calendarDays.map((dayObj, idx) => {
+                const isCurrentMonth = dayObj.currentMonth;
+                const isWeekend = idx % 7 >= 5;
+                const isTodayDate = isCurrentMonth && isToday(selectedMonth, dayObj.day);
+                const allDayEvents = isCurrentMonth ? getEventsForDay(selectedMonth, dayObj.day) : [];
+                const hasSport = allDayEvents.some(e => e.categoryId === 'sport' || e.categoryId === 'sport_gaia');
+
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => isCurrentMonth && setSelectedDay(dayObj.day)}
+                    onDragOver={(e) => handleDragOver(e, dayObj.day, isCurrentMonth)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => isCurrentMonth && handleDrop(e, selectedMonth, dayObj.day)}
+                    className={`
+                      min-h-[85px] p-1.5 border-b border-r border-gray-100 cursor-pointer
+                      transition-all duration-150
+                      ${isCurrentMonth ? 'hover:bg-blue-50' : 'opacity-30 cursor-default'}
+                      ${isWeekend && isCurrentMonth ? 'bg-purple-50/40' : ''}
+                      ${dragOverDay === dayObj.day && isCurrentMonth ? 'bg-blue-100 ring-2 ring-blue-400' : ''}
+                      ${isTodayDate ? 'bg-blue-50 ring-2 ring-blue-500 ring-inset' : ''}
+                    `}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <div className={`
+                        w-7 h-7 flex items-center justify-center rounded-full text-sm font-semibold
+                        ${isTodayDate ? 'bg-blue-600 text-white' : isWeekend && isCurrentMonth ? 'text-purple-700' : isCurrentMonth ? 'text-gray-800' : 'text-gray-300'}
+                      `}>
+                        {dayObj.day}
+                      </div>
+                      {hasSport && isCurrentMonth && <div className="w-2 h-2 rounded-full bg-green-500"></div>}
+                    </div>
+                    <div className="space-y-0.5">
+                      {allDayEvents.slice(0, 2).map(event => {
+                        const cat = categories.find(c => c.id === event.categoryId);
+                        const isSportEvent = event.categoryId === 'sport' || event.categoryId === 'sport_gaia';
+                        const isMultiDayEvent = event.endDay > event.startDay;
+                        const isStartDay = event.startDay === dayObj.day;
+                        const isEndDay = event.endDay === dayObj.day;
+                        const isContinuation = isMultiDayEvent && !isStartDay;
+                        return (
+                          <div key={event.id} className={`${cat.bg} text-white text-[10px] px-1.5 py-0.5 flex items-center gap-1 ${isMultiDayEvent ? (isStartDay ? 'rounded-l rounded-r-none mr-[-6px]' : isEndDay ? 'rounded-r rounded-l-none ml-[-6px]' : 'rounded-none mx-[-6px]') : 'rounded'}`}>
+                            {isContinuation ? <span className="truncate opacity-80">→ {event.text.slice(0, 4)}</span> : (
+                              <>
+                                {isSportEvent && <span className="flex-shrink-0">{event.timeSlot === 'mattina' ? '☀️' : event.timeSlot === 'sera' ? '🌙' : '💪'}</span>}
+                                <span className="truncate">{event.text.slice(0, 6)}</span>
+                                {isMultiDayEvent && <span className="opacity-70">→</span>}
+                              </>
+                            )}
+                          </div>
+                        );
+                      })}
+                      {allDayEvents.length > 2 && <div className="text-[10px] text-gray-500 font-medium text-center bg-gray-100 rounded py-0.5">+{allDayEvents.length - 2}</div>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Today indicator */}
         <div className="bg-white px-4 py-2 border-t flex items-center justify-center gap-2 text-sm text-gray-500">
