@@ -175,12 +175,58 @@ function App() {
   const [alimentazioneTab, setAlimentazioneTab] = useState('ingredienti');
   const [mealPickerSlot, setMealPickerSlot] = useState('pranzo');
 
-  // Calculate current week start
+  // Calculate current week start (Monday of current week)
   const today = new Date();
-  const currentDayOfMonth = today.getDate();
-  const [viewingWeekStart, setViewingWeekStart] = useState(() => {
-    return Math.max(1, currentDayOfMonth - ((today.getDay() + 6) % 7));
+  const [viewingWeekDate, setViewingWeekDate] = useState(() => {
+    // Get Monday of current week
+    const dayOfWeek = today.getDay();
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + mondayOffset);
+    return monday;
   });
+
+  // Get the 7 days of the current viewing week (always Mon-Sun)
+  const getCalendarWeekDays = () => {
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(viewingWeekDate);
+      date.setDate(viewingWeekDate.getDate() + i);
+      days.push({
+        day: date.getDate(),
+        month: date.getMonth(),
+        year: date.getFullYear(),
+        isCurrentMonth: date.getMonth() === selectedMonth
+      });
+    }
+    return days;
+  };
+
+  // Navigate to previous/next week
+  const goToPrevWeek = () => {
+    const newDate = new Date(viewingWeekDate);
+    newDate.setDate(viewingWeekDate.getDate() - 7);
+    setViewingWeekDate(newDate);
+  };
+
+  const goToNextWeek = () => {
+    const newDate = new Date(viewingWeekDate);
+    newDate.setDate(viewingWeekDate.getDate() + 7);
+    setViewingWeekDate(newDate);
+  };
+
+  // Format week range for display
+  const getWeekRangeDisplay = () => {
+    const weekDays = getCalendarWeekDays();
+    const monday = weekDays[0];
+    const sunday = weekDays[6];
+
+    if (monday.month === sunday.month) {
+      return `${monday.day} - ${sunday.day} ${months[monday.month]}`;
+    } else {
+      return `${monday.day} ${months[monday.month].slice(0, 3)} - ${sunday.day} ${months[sunday.month].slice(0, 3)}`;
+    }
+  };
 
   // Ingredient categories (materie prime)
   const ingredientCategories = [
@@ -790,16 +836,9 @@ function App() {
     </div>
   );
 
-  // Helper function for week days in Alimentazione
+  // Helper function for week days in Alimentazione (uses calendar week)
   const getWeekDays = () => {
-    const days = [];
-    for (let i = 0; i < 7; i++) {
-      const day = viewingWeekStart + i;
-      if (day <= getDaysInMonth(selectedMonth)) {
-        days.push(day);
-      }
-    }
-    return days;
+    return getCalendarWeekDays();
   };
 
   // Get ingredients and composed dishes
@@ -809,17 +848,15 @@ function App() {
   // Get sport events for smart suggestions
   const getSportEventsForWeek = () => {
     const weekDays = [];
-    for (let i = 0; i < 7; i++) {
-      const day = viewingWeekStart + i;
-      if (day <= getDaysInMonth(selectedMonth)) {
-        const dayEvents = events.filter(
-          e => e.month === selectedMonth &&
-          e.startDay <= day && e.endDay >= day &&
-          (e.categoryId === 'sport' || e.categoryId === 'sport_gaia')
-        );
-        if (dayEvents.length > 0) {
-          weekDays.push({ day, events: dayEvents });
-        }
+    const calendarDays = getCalendarWeekDays();
+    for (const dayInfo of calendarDays) {
+      const dayEvents = events.filter(
+        e => e.month === dayInfo.month &&
+        e.startDay <= dayInfo.day && e.endDay >= dayInfo.day &&
+        (e.categoryId === 'sport' || e.categoryId === 'sport_gaia')
+      );
+      if (dayEvents.length > 0) {
+        weekDays.push({ day: dayInfo.day, month: dayInfo.month, events: dayEvents });
       }
     }
     return weekDays;
@@ -910,14 +947,15 @@ function App() {
             <span className="bg-white/20 text-white text-xs px-2 py-0.5 rounded-full">{sportWeekEvents.length} allenamenti</span>
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1">
-            {sportWeekEvents.slice(0, 3).map(({ day, events: dayEvents }) => {
-              const dayOfWeek = new Date(2026, selectedMonth, day).getDay();
+            {sportWeekEvents.slice(0, 3).map(({ day, month: evtMonth, events: dayEvents }) => {
+              const dayOfWeek = new Date(2026, evtMonth, day).getDay();
               const dayName = weekDaysFull[dayOfWeek === 0 ? 6 : dayOfWeek - 1];
               return (
-                <div key={day} className="bg-white/10 backdrop-blur-sm rounded-xl p-3 min-w-[140px] flex-shrink-0">
+                <div key={`${evtMonth}-${day}`} className="bg-white/10 backdrop-blur-sm rounded-xl p-3 min-w-[140px] flex-shrink-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-white font-bold">{day}</span>
                     <span className="text-white/80 text-xs">{dayName}</span>
+                    <span className="text-white/60 text-xs">{months[evtMonth].slice(0, 3)}</span>
                   </div>
                   {dayEvents.slice(0, 2).map(evt => (
                     <div key={evt.id} className="text-white/90 text-xs flex items-center gap-1">
@@ -1275,48 +1313,48 @@ function App() {
           {/* Week navigation - improved */}
           <div className="bg-white rounded-2xl p-4 shadow-sm mb-4 flex items-center justify-between">
             <button
-              onClick={() => setViewingWeekStart(Math.max(1, viewingWeekStart - 7))}
+              onClick={goToPrevWeek}
               className="p-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
             <div className="text-center">
               <p className="text-xs text-gray-400 uppercase tracking-wide">Settimana</p>
-              <p className="font-semibold text-gray-800">{viewingWeekStart} - {Math.min(viewingWeekStart + 6, getDaysInMonth(selectedMonth))} {months[selectedMonth]}</p>
+              <p className="font-semibold text-gray-800">{getWeekRangeDisplay()}</p>
             </div>
             <button
-              onClick={() => setViewingWeekStart(Math.min(getDaysInMonth(selectedMonth) - 6, viewingWeekStart + 7))}
+              onClick={goToNextWeek}
               className="p-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Week days - improved */}
+          {/* Week days - real calendar week Mon-Sun */}
           <div className="space-y-4">
-            {getWeekDays().map(day => {
-              const dayMeals = getMealsForDay(selectedMonth, day);
-              const dayOfWeek = new Date(2026, selectedMonth, day).getDay();
-              const dayName = weekDaysFull[dayOfWeek === 0 ? 6 : dayOfWeek - 1];
-              const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+            {getWeekDays().map((dayInfo, idx) => {
+              const dayMeals = getMealsForDay(dayInfo.month, dayInfo.day);
+              const dayName = weekDaysFull[idx]; // idx 0=Lun, 1=Mar, etc.
+              const isWeekend = idx >= 5; // Sat=5, Sun=6
+              const isOtherMonth = !dayInfo.isCurrentMonth;
               // Check for sport events on this day
               const daySportEvents = events.filter(
-                e => e.month === selectedMonth &&
-                e.startDay <= day && e.endDay >= day &&
+                e => e.month === dayInfo.month &&
+                e.startDay <= dayInfo.day && e.endDay >= dayInfo.day &&
                 (e.categoryId === 'sport' || e.categoryId === 'sport_gaia')
               );
               const hasWorkout = daySportEvents.length > 0;
 
               return (
                 <div
-                  key={day}
-                  className={`bg-white rounded-2xl overflow-hidden shadow-sm border ${hasWorkout ? 'border-green-300 ring-1 ring-green-200' : isWeekend ? 'border-purple-200' : 'border-gray-100'}`}
+                  key={`${dayInfo.month}-${dayInfo.day}`}
+                  className={`bg-white rounded-2xl overflow-hidden shadow-sm border ${hasWorkout ? 'border-green-300 ring-1 ring-green-200' : isWeekend ? 'border-purple-200' : 'border-gray-100'} ${isOtherMonth ? 'opacity-60' : ''}`}
                 >
                   {/* Day header */}
                   <div className={`px-4 py-3 flex items-center justify-between ${hasWorkout ? 'bg-gradient-to-r from-green-50 to-cyan-50' : isWeekend ? 'bg-purple-50' : 'bg-gray-50'}`}>
                     <div className="flex items-center gap-3">
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white ${hasWorkout ? 'bg-gradient-to-br from-green-500 to-cyan-500' : isWeekend ? 'bg-purple-500' : 'bg-orange-500'}`}>
-                        {day}
+                        {dayInfo.day}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
@@ -1329,7 +1367,7 @@ function App() {
                           )}
                         </div>
                         <div className="flex items-center gap-1">
-                          <p className="text-xs text-gray-400">{months[selectedMonth]}</p>
+                          <p className="text-xs text-gray-400">{months[dayInfo.month]}</p>
                           {hasWorkout && (
                             <span className="text-xs text-green-600">
                               {daySportEvents.map(e => e.subtypeName).join(', ')}
@@ -1339,7 +1377,7 @@ function App() {
                       </div>
                     </div>
                     <button
-                      onClick={() => setSelectedMealDay({ month: selectedMonth, day })}
+                      onClick={() => setSelectedMealDay({ month: dayInfo.month, day: dayInfo.day })}
                       className={`p-2 rounded-xl transition-colors ${hasWorkout ? 'bg-green-100 text-green-600 hover:bg-green-200' : isWeekend ? 'bg-purple-100 text-purple-600 hover:bg-purple-200' : 'bg-orange-100 text-orange-600 hover:bg-orange-200'}`}
                     >
                       <Plus className="w-5 h-5" />
@@ -1357,7 +1395,7 @@ function App() {
                         <div
                           key={slot}
                           className={`rounded-xl p-2 bg-${color}-50 border border-${color}-100`}
-                          onClick={() => { setSelectedMealDay({ month: selectedMonth, day }); setMealPickerSlot(slot); }}
+                          onClick={() => { setSelectedMealDay({ month: dayInfo.month, day: dayInfo.day }); setMealPickerSlot(slot); }}
                         >
                           <div className={`flex items-center gap-1 mb-2 text-${color}-600`}>
                             <SlotIcon className="w-3 h-3" />
@@ -1372,7 +1410,7 @@ function App() {
                                 >
                                   <span className="truncate font-medium text-gray-700">{meal.dishName}</span>
                                   <button
-                                    onClick={(e) => { e.stopPropagation(); removeMealFromDaySlot(selectedMonth, day, slot, meal.id); }}
+                                    onClick={(e) => { e.stopPropagation(); removeMealFromDaySlot(dayInfo.month, dayInfo.day, slot, meal.id); }}
                                     className="text-gray-300 hover:text-red-500 ml-1 flex-shrink-0"
                                   >
                                     <X className="w-3 h-3" />
