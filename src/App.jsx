@@ -169,10 +169,10 @@ function App() {
   const [dishes, setDishes] = useState([]);
   const [meals, setMeals] = useState({});
   const [newDishName, setNewDishName] = useState('');
-  const [newDishCategory, setNewDishCategory] = useState('primo');
+  const [newDishCategory, setNewDishCategory] = useState('proteine');
   const [editingDish, setEditingDish] = useState(null);
   const [selectedMealDay, setSelectedMealDay] = useState(null);
-  const [alimentazioneTab, setAlimentazioneTab] = useState('piatti');
+  const [alimentazioneTab, setAlimentazioneTab] = useState('ingredienti');
   const [mealPickerSlot, setMealPickerSlot] = useState('pranzo');
 
   // Calculate current week start
@@ -182,13 +182,93 @@ function App() {
     return Math.max(1, currentDayOfMonth - ((today.getDay() + 6) % 7));
   });
 
+  // Ingredient categories (materie prime)
+  const ingredientCategories = [
+    { id: 'proteine', name: 'Proteine', color: 'bg-red-500', emoji: '🥩' },
+    { id: 'carboidrati', name: 'Carboidrati', color: 'bg-amber-500', emoji: '🌾' },
+    { id: 'verdure', name: 'Verdure', color: 'bg-green-500', emoji: '🥗' },
+    { id: 'latticini', name: 'Latticini', color: 'bg-blue-400', emoji: '🥛' },
+    { id: 'frutta', name: 'Frutta', color: 'bg-orange-400', emoji: '🍎' },
+    { id: 'altro_ing', name: 'Altro', color: 'bg-gray-500', emoji: '🫙' },
+  ];
+
+  // Dish categories (piatti composti)
   const dishCategories = [
-    { id: 'primo', name: 'Primi', color: 'bg-yellow-500' },
-    { id: 'secondo', name: 'Secondi', color: 'bg-red-500' },
-    { id: 'contorno', name: 'Contorni', color: 'bg-green-500' },
-    { id: 'dolce', name: 'Dolci', color: 'bg-pink-500' },
-    { id: 'colazione', name: 'Colazione', color: 'bg-amber-500' },
-    { id: 'snack', name: 'Snack', color: 'bg-purple-500' },
+    { id: 'pranzo', name: 'Pranzo', color: 'bg-orange-500', emoji: '🍽️' },
+    { id: 'cena', name: 'Cena', color: 'bg-indigo-500', emoji: '🌙' },
+    { id: 'colazione', name: 'Colazione', color: 'bg-amber-500', emoji: '☀️' },
+    { id: 'spuntino', name: 'Spuntino', color: 'bg-purple-500', emoji: '🍪' },
+  ];
+
+  // State for composing dishes
+  const [isComposing, setIsComposing] = useState(false);
+  const [composingDish, setComposingDish] = useState({ name: '', category: 'pranzo', ingredients: [] });
+  const [showIngredientPicker, setShowIngredientPicker] = useState(false);
+
+  // Default ingredients to pre-load
+  const defaultIngredients = [
+    // Proteine
+    { id: 'ing_pollo', name: 'Pollo', category: 'proteine', isIngredient: true },
+    { id: 'ing_tonno', name: 'Tonno al naturale', category: 'proteine', isIngredient: true },
+    { id: 'ing_salmone', name: 'Salmone', category: 'proteine', isIngredient: true },
+    { id: 'ing_merluzzo', name: 'Merluzzo/Pesce bianco', category: 'proteine', isIngredient: true },
+    { id: 'ing_uova', name: 'Uova', category: 'proteine', isIngredient: true },
+    { id: 'ing_burger_veg', name: 'Burger vegetali', category: 'proteine', isIngredient: true },
+    { id: 'ing_polpette_veg', name: 'Polpette vegetali', category: 'proteine', isIngredient: true },
+    { id: 'ing_lenticchie', name: 'Lenticchie', category: 'proteine', isIngredient: true },
+    { id: 'ing_feta', name: 'Feta', category: 'proteine', isIngredient: true },
+    // Carboidrati
+    { id: 'ing_quinoa', name: 'Quinoa', category: 'carboidrati', isIngredient: true },
+    { id: 'ing_riso_int', name: 'Riso integrale', category: 'carboidrati', isIngredient: true },
+    { id: 'ing_farro', name: 'Farro', category: 'carboidrati', isIngredient: true },
+    { id: 'ing_pane_int', name: 'Pane integrale', category: 'carboidrati', isIngredient: true },
+    { id: 'ing_pizza_int', name: 'Pizza base integrale', category: 'carboidrati', isIngredient: true },
+    { id: 'ing_muesli', name: 'Muesli', category: 'carboidrati', isIngredient: true },
+    { id: 'ing_cracker', name: 'Cracker', category: 'carboidrati', isIngredient: true },
+    // Verdure
+    { id: 'ing_verdure_grig', name: 'Verdure grigliate', category: 'verdure', isIngredient: true },
+    { id: 'ing_verdure_forno', name: 'Verdure al forno', category: 'verdure', isIngredient: true },
+    { id: 'ing_verdure_miste', name: 'Verdure miste', category: 'verdure', isIngredient: true },
+    { id: 'ing_verdure_fresche', name: 'Verdure fresche', category: 'verdure', isIngredient: true },
+    { id: 'ing_insalata', name: 'Insalata', category: 'verdure', isIngredient: true },
+    { id: 'ing_lattuga', name: 'Lattuga', category: 'verdure', isIngredient: true },
+    { id: 'ing_cetrioli', name: 'Cetrioli', category: 'verdure', isIngredient: true },
+    { id: 'ing_pomodorini', name: 'Pomodorini', category: 'verdure', isIngredient: true },
+    // Latticini
+    { id: 'ing_yogurt_greco', name: 'Yogurt greco', category: 'latticini', isIngredient: true },
+    { id: 'ing_ricotta', name: 'Ricotta', category: 'latticini', isIngredient: true },
+    { id: 'ing_latte_sl', name: 'Latte s.l.', category: 'latticini', isIngredient: true },
+    // Frutta
+    { id: 'ing_banana', name: 'Banana', category: 'frutta', isIngredient: true },
+    { id: 'ing_frutta', name: 'Frutta mista', category: 'frutta', isIngredient: true },
+    // Altro
+    { id: 'ing_marmellata', name: 'Marmellata', category: 'altro_ing', isIngredient: true },
+    { id: 'ing_burro_arachidi', name: 'Burro d\'arachidi', category: 'altro_ing', isIngredient: true },
+  ];
+
+  // Default composed dishes
+  const defaultDishes = [
+    // Pranzi
+    { id: 'dish_1', name: 'Pollo + Quinoa + Verdure grigliate', category: 'pranzo', isComposite: true, ingredientIds: ['ing_pollo', 'ing_quinoa', 'ing_verdure_grig'] },
+    { id: 'dish_2', name: 'Tonno + Riso integrale + Insalata', category: 'pranzo', isComposite: true, ingredientIds: ['ing_tonno', 'ing_riso_int', 'ing_insalata'] },
+    { id: 'dish_3', name: 'Burger vegetali + Farro + Verdure al forno', category: 'pranzo', isComposite: true, ingredientIds: ['ing_burger_veg', 'ing_farro', 'ing_verdure_forno'] },
+    { id: 'dish_4', name: 'Salmone + Riso integrale + Verdure', category: 'pranzo', isComposite: true, ingredientIds: ['ing_salmone', 'ing_riso_int', 'ing_verdure_miste'] },
+    { id: 'dish_5', name: 'Lenticchie + Verdure al forno', category: 'pranzo', isComposite: true, ingredientIds: ['ing_lenticchie', 'ing_verdure_forno'] },
+    { id: 'dish_6', name: 'Insalata greca (lattuga, cetrioli, pomodorini, feta, tonno)', category: 'pranzo', isComposite: true, ingredientIds: ['ing_lattuga', 'ing_cetrioli', 'ing_pomodorini', 'ing_feta', 'ing_tonno'] },
+    { id: 'dish_7', name: 'Lenticchie + Verdure fresche', category: 'pranzo', isComposite: true, ingredientIds: ['ing_lenticchie', 'ing_verdure_fresche'] },
+    // Cene
+    { id: 'dish_8', name: 'Merluzzo al forno + Insalata', category: 'cena', isComposite: true, ingredientIds: ['ing_merluzzo', 'ing_insalata'] },
+    { id: 'dish_9', name: 'Polpette vegetali + Verdure miste', category: 'cena', isComposite: true, ingredientIds: ['ing_polpette_veg', 'ing_verdure_miste'] },
+    { id: 'dish_10', name: 'Pollo + Verdure grigliate', category: 'cena', isComposite: true, ingredientIds: ['ing_pollo', 'ing_verdure_grig'] },
+    { id: 'dish_11', name: 'Uova strapazzate/frittata + Insalata', category: 'cena', isComposite: true, ingredientIds: ['ing_uova', 'ing_insalata'] },
+    { id: 'dish_12', name: 'Pizza integrale + Insalata', category: 'cena', isComposite: true, ingredientIds: ['ing_pizza_int', 'ing_insalata'] },
+    // Colazioni
+    { id: 'dish_13', name: 'Yogurt greco + Muesli + Banana (Andrea)', category: 'colazione', isComposite: true, ingredientIds: ['ing_yogurt_greco', 'ing_muesli', 'ing_banana'], person: 'andrea' },
+    { id: 'dish_14', name: 'Pane integrale + Ricotta + Marmellata (Gaia)', category: 'colazione', isComposite: true, ingredientIds: ['ing_pane_int', 'ing_ricotta', 'ing_marmellata'], person: 'gaia' },
+    { id: 'dish_15', name: 'Latte s.l. + Muesli + Banana (Gaia weekend)', category: 'colazione', isComposite: true, ingredientIds: ['ing_latte_sl', 'ing_muesli', 'ing_banana'], person: 'gaia' },
+    // Spuntini
+    { id: 'dish_16', name: 'Frutta + Cracker (Andrea)', category: 'spuntino', isComposite: true, ingredientIds: ['ing_frutta', 'ing_cracker'], person: 'andrea' },
+    { id: 'dish_17', name: 'Yogurt greco + Burro d\'arachidi (Gaia)', category: 'spuntino', isComposite: true, ingredientIds: ['ing_yogurt_greco', 'ing_burro_arachidi'], person: 'gaia' },
   ];
 
   useEffect(() => {
@@ -211,7 +291,18 @@ function App() {
 
       // Load dishes and meals from localStorage
       const savedDishes = localStorage.getItem(DISHES_KEY);
-      if (savedDishes) setDishes(JSON.parse(savedDishes));
+      if (savedDishes) {
+        const parsed = JSON.parse(savedDishes);
+        // Merge with defaults if empty
+        if (parsed.length === 0) {
+          setDishes([...defaultIngredients, ...defaultDishes]);
+        } else {
+          setDishes(parsed);
+        }
+      } else {
+        // First load - use defaults
+        setDishes([...defaultIngredients, ...defaultDishes]);
+      }
 
       const savedMeals = localStorage.getItem(MEALS_KEY);
       if (savedMeals) setMeals(JSON.parse(savedMeals));
@@ -644,6 +735,56 @@ function App() {
     return days;
   };
 
+  // Get ingredients and composed dishes
+  const ingredients = dishes.filter(d => d.isIngredient);
+  const composedDishes = dishes.filter(d => !d.isIngredient);
+
+  // Function to add ingredient
+  const addIngredient = () => {
+    if (!newDishName.trim()) return;
+    const newIngredient = {
+      id: `ing_${Date.now()}`,
+      name: newDishName,
+      category: newDishCategory,
+      isIngredient: true,
+      favorite: false
+    };
+    setDishes(prev => [...prev, newIngredient]);
+    setNewDishName('');
+  };
+
+  // Function to create composed dish
+  const createComposedDish = () => {
+    if (composingDish.ingredients.length === 0) return;
+    const ingredientNames = composingDish.ingredients.map(id => {
+      const ing = dishes.find(d => d.id === id);
+      return ing ? ing.name : '';
+    }).filter(Boolean);
+
+    const dishName = composingDish.name || ingredientNames.join(' + ');
+    const newDish = {
+      id: `dish_${Date.now()}`,
+      name: dishName,
+      category: composingDish.category,
+      isComposite: true,
+      ingredientIds: composingDish.ingredients,
+      favorite: false
+    };
+    setDishes(prev => [...prev, newDish]);
+    setComposingDish({ name: '', category: 'pranzo', ingredients: [] });
+    setIsComposing(false);
+  };
+
+  // Toggle ingredient selection for composing
+  const toggleIngredientForComposition = (ingredientId) => {
+    setComposingDish(prev => ({
+      ...prev,
+      ingredients: prev.ingredients.includes(ingredientId)
+        ? prev.ingredients.filter(id => id !== ingredientId)
+        : [...prev.ingredients, ingredientId]
+    }));
+  };
+
   // Render Alimentazione Page inline (to avoid re-render issues)
   const renderAlimentazionePage = () => (
     <div className="pb-20">
@@ -651,68 +792,238 @@ function App() {
       <div className="bg-white border-b sticky top-[52px] z-30">
         <div className="flex">
           <button
+            onClick={() => setAlimentazioneTab('ingredienti')}
+            className={`flex-1 py-3 flex items-center justify-center gap-1 text-xs font-medium border-b-2 transition-colors ${alimentazioneTab === 'ingredienti' ? 'border-green-500 text-green-600 bg-green-50/50' : 'border-transparent text-gray-500'}`}
+          >
+            <span>🥗</span>
+            Ingredienti
+          </button>
+          <button
             onClick={() => setAlimentazioneTab('piatti')}
-            className={`flex-1 py-3 flex items-center justify-center gap-2 text-sm font-medium border-b-2 transition-colors ${alimentazioneTab === 'piatti' ? 'border-orange-500 text-orange-600 bg-orange-50/50' : 'border-transparent text-gray-500'}`}
+            className={`flex-1 py-3 flex items-center justify-center gap-1 text-xs font-medium border-b-2 transition-colors ${alimentazioneTab === 'piatti' ? 'border-orange-500 text-orange-600 bg-orange-50/50' : 'border-transparent text-gray-500'}`}
           >
             <ChefHat className="w-4 h-4" />
-            I Miei Piatti
+            Piatti
           </button>
           <button
             onClick={() => setAlimentazioneTab('planning')}
-            className={`flex-1 py-3 flex items-center justify-center gap-2 text-sm font-medium border-b-2 transition-colors ${alimentazioneTab === 'planning' ? 'border-orange-500 text-orange-600 bg-orange-50/50' : 'border-transparent text-gray-500'}`}
+            className={`flex-1 py-3 flex items-center justify-center gap-1 text-xs font-medium border-b-2 transition-colors ${alimentazioneTab === 'planning' ? 'border-indigo-500 text-indigo-600 bg-indigo-50/50' : 'border-transparent text-gray-500'}`}
           >
             <Calendar className="w-4 h-4" />
-            Pianifica Pasti
+            Pianifica
           </button>
         </div>
       </div>
 
-      {alimentazioneTab === 'piatti' && (
+      {/* INGREDIENTI TAB */}
+      {alimentazioneTab === 'ingredienti' && (
         <div className="p-4">
-          {/* Add new dish - improved design */}
-          <div className="bg-gradient-to-br from-orange-500 to-amber-500 rounded-2xl p-4 shadow-lg mb-5">
+          {/* Add new ingredient */}
+          <div className="bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl p-4 shadow-lg mb-5">
             <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
               <Plus className="w-5 h-5" />
-              Aggiungi un nuovo piatto
+              Aggiungi ingrediente
             </h3>
             <div className="flex gap-2 mb-3">
               <input
                 type="text"
                 value={newDishName}
                 onChange={(e) => setNewDishName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && addDish()}
-                placeholder="Es: Pasta al pomodoro, Insalata mista..."
+                onKeyDown={(e) => e.key === 'Enter' && addIngredient()}
+                placeholder="Es: Pollo, Quinoa, Spinaci..."
                 className="flex-1 px-4 py-3 border-0 rounded-xl text-sm focus:ring-2 focus:ring-white/50 shadow-inner"
               />
               <button
-                onClick={addDish}
+                onClick={addIngredient}
                 disabled={!newDishName.trim()}
-                className="bg-white text-orange-600 px-5 py-3 rounded-xl font-medium shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-white text-green-600 px-5 py-3 rounded-xl font-medium shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Plus className="w-5 h-5" />
               </button>
             </div>
             <div className="flex flex-wrap gap-2">
-              {dishCategories.map(cat => (
+              {ingredientCategories.map(cat => (
                 <button
                   key={cat.id}
                   onClick={() => setNewDishCategory(cat.id)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${newDishCategory === cat.id ? 'bg-white text-orange-600 shadow-md scale-105' : 'bg-white/20 text-white hover:bg-white/30'}`}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-1 ${newDishCategory === cat.id ? 'bg-white text-green-600 shadow-md scale-105' : 'bg-white/20 text-white hover:bg-white/30'}`}
                 >
+                  <span>{cat.emoji}</span>
                   {cat.name}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Dishes list by category - improved */}
+          {/* Ingredients list by category */}
+          {ingredientCategories.map(cat => {
+            const catIngredients = ingredients.filter(d => d.category === cat.id);
+            if (catIngredients.length === 0) return null;
+            return (
+              <div key={cat.id} className="mb-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-lg">{cat.emoji}</span>
+                  <h4 className="text-sm font-semibold text-gray-700">{cat.name}</h4>
+                  <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{catIngredients.length}</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {catIngredients.map(ing => (
+                    <div
+                      key={ing.id}
+                      className={`${cat.color} text-white rounded-full px-3 py-1.5 text-sm flex items-center gap-2 shadow-sm`}
+                    >
+                      <span>{ing.name}</span>
+                      <button
+                        onClick={() => removeDish(ing.id)}
+                        className="hover:bg-white/20 rounded-full p-0.5"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+
+          {ingredients.length === 0 && (
+            <div className="text-center py-12">
+              <div className="bg-green-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-4xl">🥗</span>
+              </div>
+              <h3 className="font-semibold text-gray-700 mb-2">Nessun ingrediente salvato</h3>
+              <p className="text-gray-400 text-sm">Aggiungi le tue materie prime!</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* PIATTI TAB */}
+      {alimentazioneTab === 'piatti' && (
+        <div className="p-4">
+          {/* Compose new dish */}
+          {!isComposing ? (
+            <button
+              onClick={() => setIsComposing(true)}
+              className="w-full bg-gradient-to-br from-orange-500 to-amber-500 rounded-2xl p-4 shadow-lg mb-5 text-white text-left"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold flex items-center gap-2">
+                    <Plus className="w-5 h-5" />
+                    Componi un nuovo piatto
+                  </h3>
+                  <p className="text-orange-100 text-sm mt-1">Seleziona gli ingredienti per creare una combinazione</p>
+                </div>
+                <ChevronRight className="w-6 h-6" />
+              </div>
+            </button>
+          ) : (
+            <div className="bg-gradient-to-br from-orange-500 to-amber-500 rounded-2xl p-4 shadow-lg mb-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-white flex items-center gap-2">
+                  <ChefHat className="w-5 h-5" />
+                  Componi piatto
+                </h3>
+                <button onClick={() => { setIsComposing(false); setComposingDish({ name: '', category: 'pranzo', ingredients: [] }); }} className="text-white/80 hover:text-white">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Category selector */}
+              <div className="flex flex-wrap gap-2 mb-3">
+                {dishCategories.map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setComposingDish(prev => ({ ...prev, category: cat.id }))}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-1 ${composingDish.category === cat.id ? 'bg-white text-orange-600 shadow-md' : 'bg-white/20 text-white hover:bg-white/30'}`}
+                  >
+                    <span>{cat.emoji}</span>
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+
+              {/* Selected ingredients */}
+              <div className="bg-white/20 rounded-xl p-3 mb-3 min-h-[60px]">
+                {composingDish.ingredients.length === 0 ? (
+                  <p className="text-white/70 text-sm text-center">Seleziona gli ingredienti qui sotto</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {composingDish.ingredients.map(id => {
+                      const ing = dishes.find(d => d.id === id);
+                      if (!ing) return null;
+                      const cat = ingredientCategories.find(c => c.id === ing.category);
+                      return (
+                        <span key={id} className={`${cat?.color || 'bg-gray-500'} text-white rounded-full px-3 py-1 text-sm flex items-center gap-1`}>
+                          {ing.name}
+                          <button onClick={() => toggleIngredientForComposition(id)} className="hover:bg-white/20 rounded-full">
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Ingredient picker */}
+              <div className="bg-white rounded-xl p-3 max-h-48 overflow-y-auto mb-3">
+                {ingredientCategories.map(cat => {
+                  const catIngredients = ingredients.filter(d => d.category === cat.id);
+                  if (catIngredients.length === 0) return null;
+                  return (
+                    <div key={cat.id} className="mb-2">
+                      <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
+                        <span>{cat.emoji}</span> {cat.name}
+                      </p>
+                      <div className="flex flex-wrap gap-1">
+                        {catIngredients.map(ing => {
+                          const isSelected = composingDish.ingredients.includes(ing.id);
+                          return (
+                            <button
+                              key={ing.id}
+                              onClick={() => toggleIngredientForComposition(ing.id)}
+                              className={`px-2 py-1 rounded-full text-xs transition-all ${isSelected ? cat.color + ' text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                            >
+                              {ing.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Optional custom name */}
+              <input
+                type="text"
+                value={composingDish.name}
+                onChange={(e) => setComposingDish(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Nome personalizzato (opzionale)"
+                className="w-full px-4 py-2 rounded-xl text-sm mb-3"
+              />
+
+              {/* Create button */}
+              <button
+                onClick={createComposedDish}
+                disabled={composingDish.ingredients.length === 0}
+                className="w-full bg-white text-orange-600 py-3 rounded-xl font-semibold shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Crea Piatto ({composingDish.ingredients.length} ingredienti)
+              </button>
+            </div>
+          )}
+
+          {/* Composed dishes list by category */}
           {dishCategories.map(cat => {
-            const catDishes = dishes.filter(d => d.category === cat.id);
+            const catDishes = composedDishes.filter(d => d.category === cat.id);
             if (catDishes.length === 0) return null;
             return (
               <div key={cat.id} className="mb-5">
                 <div className="flex items-center gap-2 mb-3">
-                  <div className={`w-3 h-3 rounded-full ${cat.color}`}></div>
+                  <span className="text-lg">{cat.emoji}</span>
                   <h4 className="text-sm font-semibold text-gray-700">{cat.name}</h4>
                   <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{catDishes.length}</span>
                 </div>
@@ -720,25 +1031,42 @@ function App() {
                   {catDishes.map(dish => (
                     <div
                       key={dish.id}
-                      className="bg-white rounded-xl px-4 py-3 flex items-center justify-between shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+                      className="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-2 h-8 rounded-full ${cat.color}`}></div>
-                        <span className="font-medium text-gray-800">{dish.name}</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={() => toggleDishFavorite(dish.id)}
-                          className={`p-1.5 rounded-full transition-all ${dish.favorite ? 'text-yellow-500 bg-yellow-50' : 'text-gray-300 hover:text-yellow-400'}`}
-                        >
-                          <Star className="w-5 h-5" fill={dish.favorite ? 'currentColor' : 'none'} />
-                        </button>
-                        <button
-                          onClick={() => removeDish(dish.id)}
-                          className="p-1.5 rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all"
-                        >
-                          <X className="w-5 h-5" />
-                        </button>
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2 h-8 rounded-full ${cat.color}`}></div>
+                            <span className="font-medium text-gray-800">{dish.name}</span>
+                          </div>
+                          {dish.ingredientIds && (
+                            <div className="flex flex-wrap gap-1 mt-2 ml-5">
+                              {dish.ingredientIds.map(ingId => {
+                                const ing = dishes.find(d => d.id === ingId);
+                                const ingCat = ing ? ingredientCategories.find(c => c.id === ing.category) : null;
+                                return ing ? (
+                                  <span key={ingId} className={`text-xs px-2 py-0.5 rounded-full ${ingCat?.color || 'bg-gray-400'} text-white`}>
+                                    {ing.name}
+                                  </span>
+                                ) : null;
+                              })}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => toggleDishFavorite(dish.id)}
+                            className={`p-1.5 rounded-full transition-all ${dish.favorite ? 'text-yellow-500 bg-yellow-50' : 'text-gray-300 hover:text-yellow-400'}`}
+                          >
+                            <Star className="w-5 h-5" fill={dish.favorite ? 'currentColor' : 'none'} />
+                          </button>
+                          <button
+                            onClick={() => removeDish(dish.id)}
+                            className="p-1.5 rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -747,13 +1075,13 @@ function App() {
             );
           })}
 
-          {dishes.length === 0 && (
+          {composedDishes.length === 0 && !isComposing && (
             <div className="text-center py-12">
               <div className="bg-orange-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <UtensilsCrossed className="w-10 h-10 text-orange-400" />
+                <ChefHat className="w-10 h-10 text-orange-400" />
               </div>
-              <h3 className="font-semibold text-gray-700 mb-2">Nessun piatto salvato</h3>
-              <p className="text-gray-400 text-sm">Inizia aggiungendo i tuoi piatti preferiti!</p>
+              <h3 className="font-semibold text-gray-700 mb-2">Nessun piatto creato</h3>
+              <p className="text-gray-400 text-sm">Componi i tuoi piatti combinando gli ingredienti!</p>
             </div>
           )}
         </div>
@@ -876,7 +1204,8 @@ function App() {
   const renderMealPickerModal = () => {
     if (!selectedMealDay) return null;
 
-    const favoriteFirst = [...dishes].sort((a, b) => (b.favorite ? 1 : 0) - (a.favorite ? 1 : 0));
+    // Only show composed dishes, sorted by favorites first
+    const availableDishes = composedDishes.sort((a, b) => (b.favorite ? 1 : 0) - (a.favorite ? 1 : 0));
 
     return (
       <div className="fixed inset-0 bg-black/50 z-50 flex items-end" onClick={() => setSelectedMealDay(null)}>
@@ -914,7 +1243,7 @@ function App() {
 
           {/* Dishes list */}
           <div className="p-4 overflow-y-auto max-h-[60vh]">
-            {dishes.length === 0 ? (
+            {availableDishes.length === 0 ? (
               <div className="text-center py-8">
                 <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
                   <UtensilsCrossed className="w-8 h-8 text-gray-400" />
@@ -924,7 +1253,7 @@ function App() {
               </div>
             ) : (
               <div className="space-y-2">
-                {favoriteFirst.map(dish => {
+                {availableDishes.map(dish => {
                   const cat = dishCategories.find(c => c.id === dish.category);
                   return (
                     <button
@@ -932,11 +1261,24 @@ function App() {
                       onClick={() => { addMealToDaySlot(selectedMealDay.month, selectedMealDay.day, mealPickerSlot, dish.id); setSelectedMealDay(null); }}
                       className="w-full text-left p-4 bg-gray-50 rounded-xl flex items-center justify-between hover:bg-gray-100 transition-colors active:scale-[0.98]"
                     >
-                      <div className="flex items-center gap-3">
-                        {dish.favorite && <Star className="w-4 h-4 text-yellow-500" fill="currentColor" />}
-                        <span className="font-medium text-gray-800">{dish.name}</span>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          {dish.favorite && <Star className="w-4 h-4 text-yellow-500" fill="currentColor" />}
+                          <span className="font-medium text-gray-800">{dish.name}</span>
+                        </div>
+                        {dish.ingredientIds && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {dish.ingredientIds.slice(0, 3).map(ingId => {
+                              const ing = dishes.find(d => d.id === ingId);
+                              return ing ? (
+                                <span key={ingId} className="text-xs text-gray-500">{ing.name}</span>
+                              ) : null;
+                            })}
+                            {dish.ingredientIds.length > 3 && <span className="text-xs text-gray-400">+{dish.ingredientIds.length - 3}</span>}
+                          </div>
+                        )}
                       </div>
-                      <span className={`text-xs px-3 py-1 rounded-full ${cat?.color} text-white`}>{cat?.name}</span>
+                      <span className={`text-xs px-3 py-1 rounded-full ${cat?.color} text-white ml-2`}>{cat?.emoji} {cat?.name}</span>
                     </button>
                   );
                 })}
