@@ -910,160 +910,190 @@ function App() {
                 };
 
                 return (
-                  <div key={day} className={`p-4 ${calendarView !== 'week' ? '' : ''}`}>
-                    {/* Day header for day/3days view */}
-                    {calendarView !== 'week' && (
-                      <div className={`flex items-center justify-between mb-4 pb-4 border-b-2 ${isTodayDate ? 'border-blue-400' : 'border-gray-200'}`}>
-                        <div className="flex items-center gap-3">
-                          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-bold shadow-md ${isTodayDate ? 'bg-gradient-to-br from-blue-500 to-purple-500 text-white' : 'bg-white border-2 border-gray-200 text-gray-800'}`}>
-                            {day}
-                          </div>
-                          <div>
-                            <p className="font-bold text-lg text-gray-800">{dayName}</p>
-                            <p className="text-sm text-gray-500">{months[selectedMonth]} 2026</p>
+                  <div key={day} className={`${calendarView === 'day' ? 'min-h-screen pb-32' : 'p-4'}`}>
+                    {/* DAY VIEW - Clean two-section layout */}
+                    {calendarView === 'day' ? (
+                      <div className="bg-gray-50 min-h-screen">
+                        {/* Day Header */}
+                        <div className={`bg-gradient-to-r ${isTodayDate ? 'from-blue-600 to-purple-600' : 'from-gray-700 to-gray-800'} text-white p-4`}>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center text-2xl font-bold">
+                                {day}
+                              </div>
+                              <div>
+                                <p className="font-bold text-xl">{dayName}</p>
+                                <p className="text-sm opacity-80">{months[selectedMonth]} 2026</p>
+                              </div>
+                            </div>
+                            <button
+                              onClick={exportToReminders}
+                              className="flex items-center gap-2 px-4 py-2.5 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-medium transition-colors"
+                            >
+                              <Download className="w-4 h-4" />
+                              Export
+                            </button>
                           </div>
                         </div>
-                        {calendarView === 'day' && (
-                          <button
-                            onClick={exportToReminders}
-                            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl text-sm font-medium shadow-md"
-                          >
-                            <Download className="w-4 h-4" />
-                            Export
-                          </button>
-                        )}
-                      </div>
-                    )}
 
-                    {/* ATTIVITÀ SCHEDULATE */}
-                    <div className="mb-6">
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
-                          <CalendarDays className="w-5 h-5 text-blue-500" />
-                          Attività Schedulate
-                        </h3>
+                        <div className="p-4 space-y-4">
+                          {/* SEZIONE 1: ATTIVITÀ PROGRAMMATE */}
+                          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                            <div className="bg-gradient-to-r from-blue-500 to-purple-500 px-4 py-3">
+                              <h3 className="text-white font-bold flex items-center gap-2">
+                                <CalendarDays className="w-5 h-5" />
+                                Attività Programmate
+                              </h3>
+                            </div>
+                            <div className="p-4">
+                              {dayEvents.length > 0 ? (
+                                <div className="space-y-2">
+                                  {dayEvents.map(event => {
+                                    const cat = categories.find(c => c.id === event.categoryId);
+                                    const Icon = cat.icon;
+                                    return (
+                                      <div
+                                        key={event.id}
+                                        className={`flex items-center gap-3 p-3 rounded-xl ${cat.light} border ${cat.border}`}
+                                        onClick={() => setSelectedDay(day)}
+                                      >
+                                        <div className={`${cat.bg} p-2 rounded-xl`}>
+                                          <Icon className="w-5 h-5 text-white" />
+                                        </div>
+                                        <div className="flex-1">
+                                          <p className="font-medium text-gray-800">{event.text}</p>
+                                          <div className="flex items-center gap-2 mt-0.5">
+                                            <span className="text-xs text-gray-500">{cat.name}</span>
+                                            {event.timeSlot && (
+                                              <span className="text-xs text-gray-500">
+                                                {event.timeSlot === 'mattina' ? '☀️' : '🌙'}
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <p className="text-gray-400 text-center py-4">Nessuna attività</p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* SEZIONE 2: ALIMENTAZIONE */}
+                          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                            <div className="bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-3 flex items-center justify-between">
+                              <h3 className="text-white font-bold flex items-center gap-2">
+                                <Utensils className="w-5 h-5" />
+                                Alimentazione
+                              </h3>
+                              <button
+                                onClick={() => { setCurrentPage('alimentazione'); setAlimentazioneTab('planning'); }}
+                                className="text-white/80 hover:text-white text-xs flex items-center gap-1"
+                              >
+                                <ChefHat className="w-4 h-4" />
+                                Pianifica
+                              </button>
+                            </div>
+                            <div className="p-4 space-y-3">
+                              {/* Colazione */}
+                              <div className="flex items-start gap-3 p-3 bg-amber-50 rounded-xl">
+                                <span className="text-xl">☀️</span>
+                                <div className="flex-1">
+                                  <p className="font-semibold text-amber-800 text-sm">Colazione</p>
+                                  {(dayMeals.colazione || []).length > 0 ? (
+                                    <div className="mt-1">
+                                      {dayMeals.colazione.map(meal => (
+                                        <p key={meal.id} className="text-sm text-gray-700">{meal.dishName}</p>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <p className="text-sm text-gray-400 italic">-</p>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Pranzo */}
+                              <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-xl">
+                                <span className="text-xl">🍽️</span>
+                                <div className="flex-1">
+                                  <p className="font-semibold text-orange-800 text-sm">Pranzo</p>
+                                  {(dayMeals.pranzo || []).length > 0 ? (
+                                    <div className="mt-1">
+                                      {dayMeals.pranzo.map(meal => (
+                                        <p key={meal.id} className="text-sm text-gray-700">{meal.dishName}</p>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <p className="text-sm text-gray-400 italic">-</p>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Cena */}
+                              <div className="flex items-start gap-3 p-3 bg-indigo-50 rounded-xl">
+                                <span className="text-xl">🌙</span>
+                                <div className="flex-1">
+                                  <p className="font-semibold text-indigo-800 text-sm">Cena</p>
+                                  {(dayMeals.cena || []).length > 0 ? (
+                                    <div className="mt-1">
+                                      {dayMeals.cena.map(meal => (
+                                        <p key={meal.id} className="text-sm text-gray-700">{meal.dishName}</p>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <p className="text-sm text-gray-400 italic">-</p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* FLOATING + BUTTON */}
                         <button
                           onClick={() => setSelectedDay(day)}
-                          className="flex items-center gap-1 px-3 py-1.5 bg-blue-500 text-white rounded-lg text-xs font-medium hover:bg-blue-600 transition-colors"
+                          className="fixed bottom-24 right-4 w-14 h-14 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full shadow-lg flex items-center justify-center hover:scale-105 transition-transform z-40"
                         >
-                          <Plus className="w-4 h-4" />
-                          Aggiungi
+                          <Plus className="w-7 h-7" />
                         </button>
                       </div>
-
-                      {dayEvents.length > 0 ? (
-                        <div className="space-y-2">
+                    ) : (
+                      /* 3 DAYS / WEEK VIEW - Compact layout */
+                      <>
+                        {calendarView !== 'week' && (
+                          <div className={`flex items-center justify-between mb-3 pb-3 border-b ${isTodayDate ? 'border-blue-400' : 'border-gray-200'}`}>
+                            <div className="flex items-center gap-2">
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold ${isTodayDate ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-800'}`}>
+                                {day}
+                              </div>
+                              <div>
+                                <p className="font-semibold text-gray-800">{dayName}</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        <div className="space-y-1">
                           {dayEvents.map(event => {
                             const cat = categories.find(c => c.id === event.categoryId);
                             const Icon = cat.icon;
                             return (
                               <div
                                 key={event.id}
-                                className={`flex items-center gap-3 p-3 rounded-xl ${cat.light} border ${cat.border} hover:shadow-sm transition-shadow`}
+                                className={`flex items-center gap-2 p-2 rounded-lg ${cat.light} text-xs`}
                                 onClick={() => setSelectedDay(day)}
                               >
-                                <div className={`${cat.bg} p-2 rounded-xl shadow-sm`}>
-                                  <Icon className="w-5 h-5 text-white" />
-                                </div>
-                                <div className="flex-1">
-                                  <p className="font-medium text-gray-800">{event.text}</p>
-                                  <div className="flex items-center gap-2 mt-0.5">
-                                    <span className={`text-xs px-2 py-0.5 rounded-full ${cat.bg} text-white`}>
-                                      {cat.name}
-                                    </span>
-                                    {event.timeSlot && (
-                                      <span className="text-xs text-gray-500">
-                                        {event.timeSlot === 'mattina' ? '☀️ Mattina' : '🌙 Sera'}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
+                                <Icon className={`w-4 h-4 ${cat.text}`} />
+                                <span className="truncate">{event.text}</span>
                               </div>
                             );
                           })}
+                          {dayEvents.length === 0 && (
+                            <p className="text-gray-300 text-xs text-center py-2">-</p>
+                          )}
                         </div>
-                      ) : (
-                        <div className="bg-gray-50 rounded-xl p-4 text-center">
-                          <p className="text-gray-400 text-sm">Nessuna attività programmata</p>
-                          <button
-                            onClick={() => setSelectedDay(day)}
-                            className="mt-2 text-blue-500 text-sm font-medium hover:underline"
-                          >
-                            + Aggiungi la prima attività
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* ALIMENTAZIONE - only in day view */}
-                    {calendarView === 'day' && (
-                      <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl p-4 border border-orange-200">
-                        <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2 mb-4">
-                          <Utensils className="w-5 h-5 text-orange-500" />
-                          Alimentazione
-                        </h3>
-
-                        <div className="space-y-3">
-                          {/* Colazione */}
-                          <div className="bg-white rounded-xl p-3 shadow-sm">
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="text-lg">☀️</span>
-                              <span className="font-semibold text-amber-700">Colazione</span>
-                            </div>
-                            {(dayMeals.colazione || []).length > 0 ? (
-                              <div className="space-y-1">
-                                {dayMeals.colazione.map(meal => (
-                                  <p key={meal.id} className="text-sm text-gray-700 pl-7">{meal.dishName}</p>
-                                ))}
-                              </div>
-                            ) : (
-                              <p className="text-sm text-gray-400 pl-7 italic">Non pianificato</p>
-                            )}
-                          </div>
-
-                          {/* Pranzo */}
-                          <div className="bg-white rounded-xl p-3 shadow-sm">
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="text-lg">🍽️</span>
-                              <span className="font-semibold text-orange-700">Pranzo</span>
-                            </div>
-                            {(dayMeals.pranzo || []).length > 0 ? (
-                              <div className="space-y-1">
-                                {dayMeals.pranzo.map(meal => (
-                                  <p key={meal.id} className="text-sm text-gray-700 pl-7">{meal.dishName}</p>
-                                ))}
-                              </div>
-                            ) : (
-                              <p className="text-sm text-gray-400 pl-7 italic">Non pianificato</p>
-                            )}
-                          </div>
-
-                          {/* Cena */}
-                          <div className="bg-white rounded-xl p-3 shadow-sm">
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="text-lg">🌙</span>
-                              <span className="font-semibold text-indigo-700">Cena</span>
-                            </div>
-                            {(dayMeals.cena || []).length > 0 ? (
-                              <div className="space-y-1">
-                                {dayMeals.cena.map(meal => (
-                                  <p key={meal.id} className="text-sm text-gray-700 pl-7">{meal.dishName}</p>
-                                ))}
-                              </div>
-                            ) : (
-                              <p className="text-sm text-gray-400 pl-7 italic">Non pianificato</p>
-                            )}
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={() => { setCurrentPage('alimentazione'); setAlimentazioneTab('planning'); }}
-                          className="w-full mt-4 py-2.5 bg-orange-500 text-white rounded-xl text-sm font-medium hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
-                        >
-                          <ChefHat className="w-4 h-4" />
-                          Pianifica Pasti
-                        </button>
-                      </div>
+                      </>
                     )}
                   </div>
                 );
