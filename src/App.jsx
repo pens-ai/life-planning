@@ -910,78 +910,159 @@ function App() {
                 };
 
                 return (
-                  <div key={day} className={`p-3 ${calendarView !== 'week' ? 'border-b' : ''}`}>
+                  <div key={day} className={`p-4 ${calendarView !== 'week' ? '' : ''}`}>
                     {/* Day header for day/3days view */}
                     {calendarView !== 'week' && (
-                      <div className={`flex items-center justify-between mb-4 pb-3 border-b ${isTodayDate ? 'border-blue-300' : ''}`}>
+                      <div className={`flex items-center justify-between mb-4 pb-4 border-b-2 ${isTodayDate ? 'border-blue-400' : 'border-gray-200'}`}>
                         <div className="flex items-center gap-3">
-                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold ${isTodayDate ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800'}`}>
+                          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-bold shadow-md ${isTodayDate ? 'bg-gradient-to-br from-blue-500 to-purple-500 text-white' : 'bg-white border-2 border-gray-200 text-gray-800'}`}>
                             {day}
                           </div>
                           <div>
-                            <p className="font-semibold text-gray-800">{dayName}</p>
+                            <p className="font-bold text-lg text-gray-800">{dayName}</p>
                             <p className="text-sm text-gray-500">{months[selectedMonth]} 2026</p>
                           </div>
                         </div>
                         {calendarView === 'day' && (
                           <button
                             onClick={exportToReminders}
-                            className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg text-sm"
+                            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl text-sm font-medium shadow-md"
                           >
                             <Download className="w-4 h-4" />
-                            Reminders
+                            Export
                           </button>
                         )}
                       </div>
                     )}
 
-                    {/* Events */}
-                    <div className="space-y-2 mb-4">
-                      <h4 className="text-xs font-semibold text-gray-500 uppercase">Attività</h4>
-                      {dayEvents.length > 0 ? dayEvents.map(event => {
-                        const cat = categories.find(c => c.id === event.categoryId);
-                        const Icon = cat.icon;
-                        return (
-                          <div key={event.id} className={`flex items-center gap-2 p-2 rounded-lg ${cat.light} border ${cat.border}`} onClick={() => setSelectedDay(day)}>
-                            <div className={`${cat.bg} p-1.5 rounded-lg`}><Icon className="w-4 h-4 text-white" /></div>
-                            <div className="flex-1">
-                              <p className="text-sm font-medium">{event.text}</p>
-                              {event.timeSlot && <span className="text-xs text-gray-500">{event.timeSlot === 'mattina' ? '☀️ Mattina' : '🌙 Sera'}</span>}
-                            </div>
-                          </div>
-                        );
-                      }) : <p className="text-sm text-gray-400 italic">Nessuna attività</p>}
+                    {/* ATTIVITÀ SCHEDULATE */}
+                    <div className="mb-6">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
+                          <CalendarDays className="w-5 h-5 text-blue-500" />
+                          Attività Schedulate
+                        </h3>
+                        <button
+                          onClick={() => setSelectedDay(day)}
+                          className="flex items-center gap-1 px-3 py-1.5 bg-blue-500 text-white rounded-lg text-xs font-medium hover:bg-blue-600 transition-colors"
+                        >
+                          <Plus className="w-4 h-4" />
+                          Aggiungi
+                        </button>
+                      </div>
+
+                      {dayEvents.length > 0 ? (
+                        <div className="space-y-2">
+                          {dayEvents.map(event => {
+                            const cat = categories.find(c => c.id === event.categoryId);
+                            const Icon = cat.icon;
+                            return (
+                              <div
+                                key={event.id}
+                                className={`flex items-center gap-3 p-3 rounded-xl ${cat.light} border ${cat.border} hover:shadow-sm transition-shadow`}
+                                onClick={() => setSelectedDay(day)}
+                              >
+                                <div className={`${cat.bg} p-2 rounded-xl shadow-sm`}>
+                                  <Icon className="w-5 h-5 text-white" />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="font-medium text-gray-800">{event.text}</p>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <span className={`text-xs px-2 py-0.5 rounded-full ${cat.bg} text-white`}>
+                                      {cat.name}
+                                    </span>
+                                    {event.timeSlot && (
+                                      <span className="text-xs text-gray-500">
+                                        {event.timeSlot === 'mattina' ? '☀️ Mattina' : '🌙 Sera'}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="bg-gray-50 rounded-xl p-4 text-center">
+                          <p className="text-gray-400 text-sm">Nessuna attività programmata</p>
+                          <button
+                            onClick={() => setSelectedDay(day)}
+                            className="mt-2 text-blue-500 text-sm font-medium hover:underline"
+                          >
+                            + Aggiungi la prima attività
+                          </button>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Meals - only in day view */}
+                    {/* ALIMENTAZIONE - only in day view */}
                     {calendarView === 'day' && (
-                      <div className="space-y-2 mt-4 pt-4 border-t">
-                        <h4 className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-2">
-                          <Utensils className="w-4 h-4" /> Pasti
-                        </h4>
-                        <div className="grid grid-cols-3 gap-2">
-                          {[
-                            { slot: 'colazione', label: 'Colazione', icon: '☀️', color: 'amber' },
-                            { slot: 'pranzo', label: 'Pranzo', icon: '🍽️', color: 'orange' },
-                            { slot: 'cena', label: 'Cena', icon: '🌙', color: 'indigo' }
-                          ].map(({ slot, label, icon, color }) => (
-                            <div key={slot} className={`bg-${color}-50 rounded-xl p-3 border border-${color}-200`}>
-                              <div className="flex items-center gap-1 mb-2">
-                                <span>{icon}</span>
-                                <span className={`text-xs font-medium text-${color}-700`}>{label}</span>
-                              </div>
-                              <div className="space-y-1">
-                                {(dayMeals[slot] || []).length > 0 ? (
-                                  (dayMeals[slot] || []).map(meal => (
-                                    <p key={meal.id} className="text-xs text-gray-700 truncate">{meal.dishName}</p>
-                                  ))
-                                ) : (
-                                  <p className="text-xs text-gray-400">-</p>
-                                )}
-                              </div>
+                      <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl p-4 border border-orange-200">
+                        <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2 mb-4">
+                          <Utensils className="w-5 h-5 text-orange-500" />
+                          Alimentazione
+                        </h3>
+
+                        <div className="space-y-3">
+                          {/* Colazione */}
+                          <div className="bg-white rounded-xl p-3 shadow-sm">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-lg">☀️</span>
+                              <span className="font-semibold text-amber-700">Colazione</span>
                             </div>
-                          ))}
+                            {(dayMeals.colazione || []).length > 0 ? (
+                              <div className="space-y-1">
+                                {dayMeals.colazione.map(meal => (
+                                  <p key={meal.id} className="text-sm text-gray-700 pl-7">{meal.dishName}</p>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-sm text-gray-400 pl-7 italic">Non pianificato</p>
+                            )}
+                          </div>
+
+                          {/* Pranzo */}
+                          <div className="bg-white rounded-xl p-3 shadow-sm">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-lg">🍽️</span>
+                              <span className="font-semibold text-orange-700">Pranzo</span>
+                            </div>
+                            {(dayMeals.pranzo || []).length > 0 ? (
+                              <div className="space-y-1">
+                                {dayMeals.pranzo.map(meal => (
+                                  <p key={meal.id} className="text-sm text-gray-700 pl-7">{meal.dishName}</p>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-sm text-gray-400 pl-7 italic">Non pianificato</p>
+                            )}
+                          </div>
+
+                          {/* Cena */}
+                          <div className="bg-white rounded-xl p-3 shadow-sm">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-lg">🌙</span>
+                              <span className="font-semibold text-indigo-700">Cena</span>
+                            </div>
+                            {(dayMeals.cena || []).length > 0 ? (
+                              <div className="space-y-1">
+                                {dayMeals.cena.map(meal => (
+                                  <p key={meal.id} className="text-sm text-gray-700 pl-7">{meal.dishName}</p>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-sm text-gray-400 pl-7 italic">Non pianificato</p>
+                            )}
+                          </div>
                         </div>
+
+                        <button
+                          onClick={() => { setCurrentPage('alimentazione'); setAlimentazioneTab('planning'); }}
+                          className="w-full mt-4 py-2.5 bg-orange-500 text-white rounded-xl text-sm font-medium hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
+                        >
+                          <ChefHat className="w-4 h-4" />
+                          Pianifica Pasti
+                        </button>
                       </div>
                     )}
                   </div>
