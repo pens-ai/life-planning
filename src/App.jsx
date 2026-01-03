@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  ChevronLeft, ChevronRight, Plus, X, Check, GripVertical,
+  ChevronLeft, ChevronRight, Plus, X,
   Plane, Car, Train, Dumbbell, Bike, Heart, Utensils,
   PiggyBank, Stethoscope, Cake, BookOpen, Home, Target,
   MapPin, TrendingUp, Waves, Activity, Coffee,
@@ -525,16 +525,6 @@ function App() {
     setIsMultiDay(false); setNewItemTimeSlot(''); setAddingTo(null);
   };
 
-  const toggleEvent = async (eventId) => {
-    const event = events.find(e => e.id === eventId);
-    if (!event) return;
-    const newDone = !event.done;
-    setEvents(prev => prev.map(e => e.id === eventId ? { ...e, done: newDone } : e));
-    if (isSupabaseConfigured()) {
-      try { await supabase.from('events').update({ done: newDone }).eq('id', eventId); } catch {}
-    }
-  };
-
   const removeEvent = async (eventId) => {
     setEvents(prev => prev.filter(e => e.id !== eventId));
     if (isSupabaseConfigured()) {
@@ -644,30 +634,6 @@ function App() {
     return days;
   };
 
-  const getMonthStats = () => {
-    const stats = {};
-    categories.forEach(cat => { stats[cat.id] = { total: 0, done: 0, amount: 0, days: 0 }; });
-    events.filter(e => e.month === selectedMonth).forEach(event => {
-      stats[event.categoryId].total++;
-      stats[event.categoryId].days += (event.endDay - event.startDay + 1);
-      if (event.done) stats[event.categoryId].done++;
-      if (event.amount) stats[event.categoryId].amount += event.amount;
-    });
-    return stats;
-  };
-
-  const getYearStats = () => {
-    const stats = {};
-    categories.forEach(cat => { stats[cat.id] = { total: 0, done: 0, amount: 0, days: 0 }; });
-    events.forEach(event => {
-      stats[event.categoryId].total++;
-      stats[event.categoryId].days += (event.endDay - event.startDay + 1);
-      if (event.done) stats[event.categoryId].done++;
-      if (event.amount) stats[event.categoryId].amount += event.amount;
-    });
-    return stats;
-  };
-
   // Dish functions
   const addDish = () => {
     if (!newDishName.trim()) return;
@@ -708,8 +674,6 @@ function App() {
   };
 
   const calendarDays = getCalendarDays(selectedMonth);
-  const monthStats = getMonthStats();
-  const yearStats = getYearStats();
 
   if (isLoading) {
     return (
@@ -821,8 +785,8 @@ function App() {
                   {dayEvents.slice(0, 3).map(event => {
                     const cat = categories.find(c => c.id === event.categoryId);
                     return (
-                      <div key={event.id} className={`${cat.bg} text-white text-[10px] px-1 py-0.5 rounded truncate ${event.done ? 'opacity-50' : ''}`}>
-                        {event.done && '✓'}{event.text.slice(0, 8)}
+                      <div key={event.id} className={`${cat.bg} text-white text-[10px] px-1 py-0.5 rounded truncate`}>
+                        {event.text.slice(0, 8)}
                       </div>
                     );
                   })}
@@ -1586,12 +1550,9 @@ function App() {
 
                   return (
                     <div key={event.id} className={`flex items-center gap-2 p-2 rounded-xl ${cat.light} border ${cat.border}`}>
-                      <button onClick={() => toggleEvent(event.id)} className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${event.done ? cat.bg + ' border-transparent' : 'border-gray-300 bg-white'}`}>
-                        {event.done && <Check className="w-4 h-4 text-white" />}
-                      </button>
                       <div className={`${cat.bg} p-1.5 rounded-lg`}><Icon className="w-4 h-4 text-white" /></div>
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm truncate ${event.done ? 'line-through opacity-50' : ''}`}>
+                        <p className="text-sm truncate">
                           {event.text}
                           {event.timeSlot && <span className={`ml-1 text-xs ${event.timeSlot === 'mattina' ? 'text-amber-600' : 'text-indigo-600'}`}>{event.timeSlot === 'mattina' ? '☀️' : '🌙'}</span>}
                         </p>
@@ -1670,36 +1631,101 @@ function App() {
     );
   };
 
-  // Stats Modal
+  // Stats Modal - Solo Sport
   const StatsModal = () => {
     if (!showStats) return null;
+
+    // Calculate sport stats
+    const sportEvents = events.filter(e => e.categoryId === 'sport' || e.categoryId === 'sport_gaia');
+
+    // Count unique days with training
+    const trainingDays = new Set();
+    sportEvents.forEach(e => {
+      for (let d = e.startDay; d <= e.endDay; d++) {
+        trainingDays.add(`${e.month}-${d}`);
+      }
+    });
+
+    // Count by sport type
+    const sportTypeCount = {};
+    sportEvents.forEach(e => {
+      const key = e.subtypeName;
+      sportTypeCount[key] = (sportTypeCount[key] || 0) + 1;
+    });
+
+    // Count by person (Andrea vs Gaia)
+    const andreaEvents = events.filter(e => e.categoryId === 'sport');
+    const gaiaEvents = events.filter(e => e.categoryId === 'sport_gaia');
+
     return (
       <div className="fixed inset-0 bg-black/50 z-50" onClick={() => setShowStats(false)}>
         <div className="absolute inset-x-0 bottom-0 bg-white rounded-t-2xl max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-          <div className="sticky top-0 bg-emerald-500 p-4 text-white rounded-t-2xl">
+          <div className="sticky top-0 bg-gradient-to-r from-green-500 to-cyan-500 p-4 text-white rounded-t-2xl">
             <div className="flex justify-between items-center">
-              <h2 className="text-xl font-bold">Statistiche 2026</h2>
+              <div className="flex items-center gap-2">
+                <Dumbbell className="w-6 h-6" />
+                <h2 className="text-xl font-bold">Statistiche Sport 2026</h2>
+              </div>
               <button onClick={() => setShowStats(false)}><X className="w-6 h-6" /></button>
             </div>
           </div>
-          <div className="p-4 space-y-3">
-            {categories.map(cat => {
-              const Icon = cat.icon;
-              const stats = yearStats[cat.id];
-              if (stats.total === 0) return null;
-              return (
-                <div key={cat.id} className={`${cat.light} rounded-xl p-3 border ${cat.border}`}>
-                  <div className="flex items-center gap-2">
-                    <div className={`${cat.bg} p-2 rounded-lg`}><Icon className="w-5 h-5 text-white" /></div>
-                    <div className="flex-1">
-                      <p className={`font-medium ${cat.text}`}>{cat.name}</p>
-                      <p className="text-xs text-gray-500">{stats.total} eventi • {stats.done} completati</p>
-                    </div>
-                    {stats.amount > 0 && <span className={`font-bold ${cat.text}`}>€{stats.amount}</span>}
-                  </div>
+
+          <div className="p-4 space-y-4">
+            {/* Summary */}
+            <div className="bg-gradient-to-br from-green-50 to-cyan-50 rounded-2xl p-4 border border-green-200">
+              <div className="grid grid-cols-2 gap-4 text-center">
+                <div>
+                  <p className="text-3xl font-bold text-green-600">{trainingDays.size}</p>
+                  <p className="text-sm text-gray-600">Giorni di allenamento</p>
                 </div>
-              );
-            })}
+                <div>
+                  <p className="text-3xl font-bold text-cyan-600">{sportEvents.length}</p>
+                  <p className="text-sm text-gray-600">Sessioni totali</p>
+                </div>
+              </div>
+            </div>
+
+            {/* By Person */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-green-50 rounded-xl p-3 border border-green-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-sm font-bold">A</span>
+                  </div>
+                  <span className="font-medium text-green-700">Andrea</span>
+                </div>
+                <p className="text-2xl font-bold text-green-600">{andreaEvents.length}</p>
+                <p className="text-xs text-gray-500">sessioni programmate</p>
+              </div>
+              <div className="bg-pink-50 rounded-xl p-3 border border-pink-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 bg-pink-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-sm font-bold">G</span>
+                  </div>
+                  <span className="font-medium text-pink-700">Gaia</span>
+                </div>
+                <p className="text-2xl font-bold text-pink-600">{gaiaEvents.length}</p>
+                <p className="text-xs text-gray-500">sessioni programmate</p>
+              </div>
+            </div>
+
+            {/* By Sport Type */}
+            <div className="bg-white rounded-xl border border-gray-200">
+              <div className="p-3 border-b border-gray-100">
+                <h3 className="font-semibold text-gray-800">Tipi di sport</h3>
+              </div>
+              <div className="p-3 space-y-2">
+                {Object.entries(sportTypeCount).sort((a, b) => b[1] - a[1]).map(([type, count]) => (
+                  <div key={type} className="flex items-center justify-between">
+                    <span className="text-gray-700">{type}</span>
+                    <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">{count}</span>
+                  </div>
+                ))}
+                {Object.keys(sportTypeCount).length === 0 && (
+                  <p className="text-gray-400 text-center py-2">Nessun allenamento programmato</p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
