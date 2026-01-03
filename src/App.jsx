@@ -293,9 +293,12 @@ function App() {
       const savedDishes = localStorage.getItem(DISHES_KEY);
       if (savedDishes) {
         const parsed = JSON.parse(savedDishes);
-        // Merge with defaults if empty
-        if (parsed.length === 0) {
-          setDishes([...defaultIngredients, ...defaultDishes]);
+        // Check if we have the new ingredients format
+        const hasNewIngredients = parsed.some(d => d.isIngredient);
+        if (!hasNewIngredients || parsed.length === 0) {
+          // Migrate: keep old dishes but add new ingredients and default dishes
+          const oldNonIngredients = parsed.filter(d => !d.isIngredient && !d.isComposite);
+          setDishes([...defaultIngredients, ...defaultDishes, ...oldNonIngredients]);
         } else {
           setDishes(parsed);
         }
